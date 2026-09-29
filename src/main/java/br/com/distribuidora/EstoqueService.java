@@ -28,7 +28,8 @@ public class EstoqueService {
         return produtos.save(produto);
     }
     public record Sugestao(Long produtoId, String nome, int saldo, int estoqueSeguranca,
-                           double mediaDiaria, int pontoReposicao, int quantidadeSugerida, boolean baixoGiro) {}
+                           double mediaDiaria, int pontoReposicao, int quantidadeSugerida,
+                           boolean baixoGiro, boolean estoqueCritico) {}
     @Transactional(readOnly = true)
     public List<Sugestao> sugestoes(int dias) {
         if (dias != 30 && dias != 60 && dias != 90)
@@ -44,7 +45,8 @@ public class EstoqueService {
             boolean parado = !ativos60.contains(p.id);
             int alvo = (int) Math.ceil(media * (p.prazoEntregaDias + p.coberturaDesejadaDias)) + p.estoqueSeguranca;
             int quantidade = parado || p.saldo > ponto ? 0 : Math.max(0, alvo - p.saldo);
-            return new Sugestao(p.id, p.nome, p.saldo, p.estoqueSeguranca, media, ponto, quantidade, parado);
+            return new Sugestao(p.id, p.nome, p.saldo, p.estoqueSeguranca, media, ponto, quantidade,
+                parado, p.saldo <= p.estoqueSeguranca);
         }).sorted(Comparator.comparingInt((Sugestao s) -> s.quantidadeSugerida()).reversed()).toList();
     }
 }

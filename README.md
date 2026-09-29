@@ -1,12 +1,12 @@
 # Distribuidora de bebidas — controle de estoque
 
-Primeira etapa do sistema da Distribuidora de Bebidas do Gaúcho. API em Java 17, Spring Boot e PostgreSQL para cadastro, entradas e saídas, consulta de saldo e sugestão de reposição.
+Primeira etapa do sistema da Distribuidora de Bebidas do Gaúcho. Painel web e API em Java 17, Spring Boot e PostgreSQL para cadastro, entradas e saídas, consulta de saldo e sugestão de reposição.
 
 ## Executar
 
 1. Instale Java 17, Maven e PostgreSQL. Crie o banco `distribuidora`.
 2. Configure `DB_URL`, `DB_USER` e `DB_PASSWORD` se não usar os padrões de desenvolvimento definidos em `application.properties`.
-3. Execute `mvn spring-boot:run` na raiz do projeto. A API estará em `http://localhost:8080`.
+3. Execute `mvn spring-boot:run` na raiz do projeto. Abra `http://localhost:8080` para usar o painel. A API estará em `http://localhost:8080/api`.
 
 Exemplo de uso:
 
@@ -22,8 +22,8 @@ A média diária usa saídas no período escolhido (30, 60 ou 90 dias), dividida
 
 ## Estado atual
 
-- Implementados: cadastro básico, consulta de saldos, entradas e saídas transacionais, cálculo de demanda e sugestão com bloqueio para itens sem saída há 60 dias.
-- Pendentes: interface web, autenticação e perfis, ajuste/confirmação de ordem de compra, portal atacadista, reserva e agendamento. A API atual é apenas para desenvolvimento local e não deve ser exposta publicamente antes de implementar autenticação.
+- Implementados: painel web responsivo para cadastro básico, consulta de saldos, entradas e saídas, alerta visual de estoque crítico e sugestão com bloqueio para itens sem saída há 60 dias.
+- Pendentes: autenticação e perfis, ajuste/confirmação de ordem de compra, portal atacadista, reserva e agendamento. O painel e a API atuais são apenas para desenvolvimento local e não devem ser expostos publicamente antes de implementar autenticação.
 - A criação automática das tabelas (`ddl-auto=update`) é provisória; antes de produção, substituir por migrações versionadas.
 
 Consulte a documentação do projeto para os requisitos RF-01 a RF-07, regras RN-01 a RN-03 e casos de uso UC-01 a UC-10.
