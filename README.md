@@ -46,4 +46,10 @@ Consulte a documentação do projeto para os requisitos RF-01 a RF-07, regras RN
 
 Os pacotes Java ficam abaixo de `br.com.distribuidora`, para serem encontrados automaticamente pelo Spring Boot. A separação em pacotes mantém as mesmas rotas da API e os mesmos nomes de entidades e tabelas. Arquivos gerados na pasta `target/` não devem ser enviados ao GitHub.
 
-Para baixar a organização no computador, com a aplicação parada e a branch `feat/estoque-reposicao` selecionada, execute `git pull`. Depois reinicie com `mvn spring-boot:run`. Acesse a porta definida no seu terminal, por exemplo `http://localhost:8081` quando `SERVER_PORT=8081`.
+Para baixar a organização no computador, com a aplicação parada e a branch `feat/estoque-reposicao` selecionada, execute `git pull`. Depois reinicie com `mvn clean spring-boot:run` para remover classes compiladas antigas. Acesse a porta definida no seu terminal, por exemplo `http://localhost:8081` quando `SERVER_PORT=8081`.
+
+## Apagar produtos e limpar estoque
+
+O botão **Apagar** de cada linha exclui o produto e seu histórico de movimentações após confirmação. **Limpar todo o estoque** apaga todos os produtos e seus históricos; exige digitar `LIMPAR` para confirmar. Essas operações são permanentes e não significam apenas zerar os saldos.
+
+API: `DELETE /api/produtos/{id}` apaga um produto (404 se inexistente); `DELETE /api/produtos` limpa o estoque. Sucesso retorna HTTP 204 sem conteúdo. O histórico é removido antes dos produtos, na mesma transação. Os testes de integração usam exclusivamente H2 em memória: `mvn clean test`.

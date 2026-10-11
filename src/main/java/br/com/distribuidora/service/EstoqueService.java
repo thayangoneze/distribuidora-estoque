@@ -22,6 +22,20 @@ public class EstoqueService {
         this.produtos = produtos; this.movimentacoes = movimentacoes;
     }
     @Transactional
+    public void apagarProduto(Long id) {
+        Produto produto = produtos.buscarParaAtualizar(id).orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto não encontrado"));
+        movimentacoes.apagarPorProdutos(List.of(id));
+        produtos.delete(produto);
+    }
+    @Transactional
+    public void limparEstoque() {
+        List<Long> ids = produtos.buscarTodosParaAtualizar().stream().map(p -> p.id).toList();
+        if (ids.isEmpty()) return;
+        movimentacoes.apagarPorProdutos(ids);
+        produtos.deleteAllByIdInBatch(ids);
+    }
+    @Transactional
     public Produto movimentar(Long id, Movimentacao.Tipo tipo, int quantidade) {
         if (quantidade <= 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quantidade deve ser positiva");
         Produto produto = produtos.buscarParaAtualizar(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto não encontrado"));

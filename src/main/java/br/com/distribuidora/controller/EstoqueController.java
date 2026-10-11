@@ -23,6 +23,10 @@ public class EstoqueController {
         return produtos.save(produto);
     }
     @GetMapping("/produtos") public List<Produto> listar() { return produtos.findAll(); }
+    @DeleteMapping("/produtos/{id}") @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void apagar(@PathVariable Long id) { estoque.apagarProduto(id); }
+    @DeleteMapping("/produtos") @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void limpar() { estoque.limparEstoque(); }
     @PostMapping("/produtos/{id}/movimentacoes")
     public Produto movimentar(@PathVariable Long id, @Valid @RequestBody NovaMovimentacao dados) {
         return estoque.movimentar(id, dados.tipo(), dados.quantidade());

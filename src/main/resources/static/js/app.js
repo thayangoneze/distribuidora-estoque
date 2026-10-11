@@ -12,7 +12,7 @@ async function requisitar(url, options) {
     try { detalhe = (await resposta.json()).detail || ''; } catch (_) { /* resposta sem JSON */ }
     throw new Error(detalhe || `Falha na operação (HTTP ${resposta.status}).`);
   }
-  return resposta.json();
+  return resposta.status === 204 ? null : resposta.json();
 }
 function celula(linha, valor, classe) {
   const td = document.createElement('td');
@@ -55,10 +55,28 @@ async function atualizar() {
       celula(linha, p.saldo, critico ? 'critico' : '');
       celula(linha, p.estoqueSeguranca);
       selo(linha, critico ? 'Estoque crítico' : 'Normal', critico ? 'alerta' : '');
+      const acoes = document.createElement('td');
+      const apagar = document.createElement('button');
+      apagar.type = 'button';
+      apagar.className = 'perigo';
+      apagar.textContent = 'Apagar';
+      apagar.setAttribute('aria-label', `Apagar ${p.nome}`);
+      apagar.addEventListener('click', async () => {
+        if (!confirm(`Apagar "${p.nome}" e todo o histórico de movimentações desse produto? Esta ação não pode ser desfeita.`)) return;
+        apagar.disabled = true;
+        try {
+          await requisitar(`/api/produtos/${p.id}`, { method: 'DELETE' });
+          avisar('Produto e histórico apagados.');
+          await atualizar();
+        } catch (erro) { avisar(erro.message, true); apagar.disabled = false; }
+      });
+      acoes.append(apagar);
+      linha.append(acoes);
       lista.append(linha);
     });
     seletor.value = selecionado;
-    if (!produtos.length) vazio(lista, 4, 'Nenhum produto cadastrado.');
+    $('#limpar-estoque').disabled = !produtos.length;
+    if (!produtos.length) vazio(lista, 5, 'Nenhum produto cadastrado.');
     const reposicao = $('#lista-reposicao');
     reposicao.replaceChildren();
     sugestoes.forEach(s => {
@@ -103,4 +121,14 @@ $('#form-movimentacao').addEventListener('submit', async evento => {
 });
 $('#periodo').addEventListener('change', atualizar);
 $('#atualizar').addEventListener('click', atualizar);
+$('#limpar-estoque').addEventListener('click', async evento => {
+  if (prompt('Esta ação apaga TODOS os produtos e seus históricos de movimentação. Para confirmar, digite LIMPAR:') !== 'LIMPAR') return;
+  const botao = evento.currentTarget;
+  botao.disabled = true;
+  try {
+    await requisitar('/api/produtos', { method: 'DELETE' });
+    avisar('Todos os produtos e históricos foram apagados.');
+    await atualizar();
+  } catch (erro) { avisar(erro.message, true); botao.disabled = false; }
+});
 atualizar();

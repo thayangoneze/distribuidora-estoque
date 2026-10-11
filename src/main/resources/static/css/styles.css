@@ -24,6 +24,10 @@ input:focus, select:focus, button:focus-visible { outline: 3px solid #8ac8a4; ou
 button { border: 0; border-radius: 7px; background: #176d4a; color: white; padding: 11px 16px; cursor: pointer; font: inherit; font-weight: 650; }
 button:hover { background: #12543a; }
 button.secundario { color: #176d4a; background: #e6f4eb; }
+button.perigo { background: #a22020; }
+button.perigo:hover { background: #7f1919; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.acoes { display: flex; flex-wrap: wrap; gap: 8px; }
 .tabela-painel { margin-top: 16px; }
 .titulo-linha h2 { margin: 0; }
 .rolagem { overflow-x: auto; margin-top: 16px; }

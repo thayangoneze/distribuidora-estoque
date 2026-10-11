@@ -46,8 +46,8 @@
       </section>
     </div>
     <section class="painel tabela-painel">
-      <div class="titulo-linha"><h2>Produtos em estoque</h2><button type="button" class="secundario" id="atualizar">Atualizar</button></div>
-      <div class="rolagem"><table><thead><tr><th>Produto</th><th>Saldo</th><th>Segurança</th><th>Situação</th></tr></thead><tbody id="lista-produtos"></tbody></table></div>
+      <div class="titulo-linha"><h2>Produtos em estoque</h2><div class="acoes"><button type="button" class="secundario" id="atualizar">Atualizar</button><button type="button" class="perigo" id="limpar-estoque" disabled>Limpar todo o estoque</button></div></div>
+      <div class="rolagem"><table><thead><tr><th>Produto</th><th>Saldo</th><th>Segurança</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="lista-produtos"></tbody></table></div>
     </section>
     <section class="painel tabela-painel">
       <div class="titulo-linha"><h2>Sugestão de reposição</h2><label class="periodo">Analisar últimos <select id="periodo"><option value="30">30 dias</option><option value="60">60 dias</option><option value="90">90 dias</option></select></label></div>
