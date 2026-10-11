@@ -23,7 +23,7 @@ A média diária usa saídas no período escolhido (30, 60 ou 90 dias), dividida
 ## Estado atual
 
 - Implementados: painel web responsivo para cadastro básico, consulta de saldos, entradas e saídas, alerta visual de estoque crítico e sugestão com bloqueio para itens sem saída há 60 dias.
-- Pendentes: autenticação e perfis, ajuste/confirmação de ordem de compra, portal atacadista, reserva e agendamento. O painel e a API atuais são apenas para desenvolvimento local e não devem ser expostos publicamente antes de implementar autenticação.
+- Pendentes: múltiplos usuários e perfis, ajuste/confirmação de ordem de compra, portal atacadista, reserva e agendamento. O painel e a API atuais são apenas para desenvolvimento local e usam uma credencial provisória para desenvolvimento.
 - A criação automática das tabelas (`ddl-auto=update`) é provisória; antes de produção, substituir por migrações versionadas.
 
 Consulte a documentação do projeto para os requisitos RF-01 a RF-07, regras RN-01 a RN-03 e casos de uso UC-01 a UC-10.
@@ -57,3 +57,9 @@ API: `DELETE /api/produtos/{id}` apaga um produto (404 se inexistente); `DELETE 
 ## Interface
 
 O painel utiliza preto, branco e tons de cinza, com cartões e campos arredondados. A navegação permite acessar visão geral, movimentações, produtos e reposição. A interface adapta os formulários a telas menores e mantém tabelas com rolagem horizontal quando necessário.
+
+## Login
+
+Ao abrir o painel, entre como **Administrador** com a senha provisória **123456**. A autenticação por sessão protege a interface e a API; o botão **Sair** encerra a sessão. A senha é configurada pelo ambiente `ADMIN_DELETE_PASSWORD` e também é utilizada na confirmação de limpeza completa do estoque.
+
+Requisições de alteração exigem um token CSRF. A interface o obtém automaticamente em `GET /csrf`. Para clientes de API, faça login com cookies de sessão e envie o token no cabeçalho indicado pela resposta de `/csrf`.

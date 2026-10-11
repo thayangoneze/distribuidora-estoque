@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entrar | Distribuidora do Gaúcho</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="/js/login.js" defer></script>
+</head>
+<body class="pagina-login">
+  <main class="cartao-login">
+    <div class="logo-login"><span class="simbolo" aria-hidden="true">G.</span><span>Distribuidora do Gaúcho</span></div>
+    <span class="sobretitulo escuro">GESTÃO DE ESTOQUE</span>
+    <h1>Bem-vindo.</h1><p class="ajuda">Entre com suas credenciais para acessar o painel.</p>
+    <p id="mensagem-login" role="status" aria-live="polite" hidden></p>
+    <form id="form-login" action="/login" method="post">
+      <input type="hidden" id="token-login">
+      <label>Usuário<input name="username" autocomplete="username" required placeholder="Seu usuário" autofocus></label>
+      <label>Senha<input type="password" name="password" autocomplete="current-password" required placeholder="Sua senha"></label>
+      <button type="submit" id="entrar" disabled>Entrar no painel</button>
+    </form>
+    <p class="rodape-login">Controle de estoque e reposição</p>
+  </main>
+</body>
+</html>
