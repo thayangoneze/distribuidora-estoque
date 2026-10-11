@@ -1,4 +1,10 @@
-package br.com.distribuidora;
+package br.com.distribuidora.service;
+
+import br.com.distribuidora.dto.Sugestao;
+import br.com.distribuidora.model.Movimentacao;
+import br.com.distribuidora.model.Produto;
+import br.com.distribuidora.repository.MovimentacaoRepository;
+import br.com.distribuidora.repository.ProdutoRepository;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,9 +33,6 @@ public class EstoqueService {
         movimentacoes.save(new Movimentacao(produto, tipo, quantidade));
         return produtos.save(produto);
     }
-    public record Sugestao(Long produtoId, String nome, int saldo, int estoqueSeguranca,
-                           double mediaDiaria, int pontoReposicao, int quantidadeSugerida,
-                           boolean baixoGiro, boolean estoqueCritico) {}
     @Transactional(readOnly = true)
     public List<Sugestao> sugestoes(int dias) {
         if (dias != 30 && dias != 60 && dias != 90)

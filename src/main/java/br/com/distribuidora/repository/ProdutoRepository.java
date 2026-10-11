@@ -1,4 +1,6 @@
-package br.com.distribuidora;
+package br.com.distribuidora.repository;
+
+import br.com.distribuidora.model.Produto;
 
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;

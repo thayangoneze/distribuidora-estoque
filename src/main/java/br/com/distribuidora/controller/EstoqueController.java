@@ -1,8 +1,12 @@
-package br.com.distribuidora;
+package br.com.distribuidora.controller;
+
+import br.com.distribuidora.dto.NovaMovimentacao;
+import br.com.distribuidora.dto.Sugestao;
+import br.com.distribuidora.model.Produto;
+import br.com.distribuidora.repository.ProdutoRepository;
+import br.com.distribuidora.service.EstoqueService;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import java.util.List;
@@ -19,13 +23,12 @@ public class EstoqueController {
         return produtos.save(produto);
     }
     @GetMapping("/produtos") public List<Produto> listar() { return produtos.findAll(); }
-    public record NovaMovimentacao(@NotNull Movimentacao.Tipo tipo, @Min(1) int quantidade) {}
     @PostMapping("/produtos/{id}/movimentacoes")
     public Produto movimentar(@PathVariable Long id, @Valid @RequestBody NovaMovimentacao dados) {
         return estoque.movimentar(id, dados.tipo(), dados.quantidade());
     }
     @GetMapping("/reposicao")
-    public List<EstoqueService.Sugestao> reposicao(@RequestParam(defaultValue = "30") int dias) {
+    public List<Sugestao> reposicao(@RequestParam(defaultValue = "30") int dias) {
         return estoque.sugestoes(dias);
     }
 }

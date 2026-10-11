@@ -1,4 +1,6 @@
-package br.com.distribuidora;
+package br.com.distribuidora.repository;
+
+import br.com.distribuidora.model.Movimentacao;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.time.Instant;

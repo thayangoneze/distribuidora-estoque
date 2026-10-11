@@ -27,3 +27,23 @@ A média diária usa saídas no período escolhido (30, 60 ou 90 dias), dividida
 - A criação automática das tabelas (`ddl-auto=update`) é provisória; antes de produção, substituir por migrações versionadas.
 
 Consulte a documentação do projeto para os requisitos RF-01 a RF-07, regras RN-01 a RN-03 e casos de uso UC-01 a UC-10.
+
+## Organização do código
+
+| Caminho | Responsabilidade |
+| --- | --- |
+| `src/main/java/br/com/distribuidora/EstoqueApplication.java` | Iniciar o Spring Boot |
+| `src/main/java/br/com/distribuidora/controller/` | Receber as requisições da interface e expor a API |
+| `src/main/java/br/com/distribuidora/service/` | Validar movimentações e calcular reposição |
+| `src/main/java/br/com/distribuidora/model/` | Entidades Produto e Movimentacao persistidas no banco |
+| `src/main/java/br/com/distribuidora/repository/` | Consultas e gravação no PostgreSQL |
+| `src/main/java/br/com/distribuidora/dto/` | Dados de entrada e resultado da análise |
+| `src/main/resources/static/index.html` | Estrutura da tela |
+| `src/main/resources/static/css/` | Aparência e adaptação a celulares |
+| `src/main/resources/static/js/` | Interação da tela com a API |
+| `src/main/resources/application.properties` | Configuração do banco e do Spring Boot |
+| `pom.xml` | Dependências e configuração do Maven |
+
+Os pacotes Java ficam abaixo de `br.com.distribuidora`, para serem encontrados automaticamente pelo Spring Boot. A separação em pacotes mantém as mesmas rotas da API e os mesmos nomes de entidades e tabelas. Arquivos gerados na pasta `target/` não devem ser enviados ao GitHub.
+
+Para baixar a organização no computador, com a aplicação parada e a branch `feat/estoque-reposicao` selecionada, execute `git pull`. Depois reinicie com `mvn spring-boot:run`. Acesse a porta definida no seu terminal, por exemplo `http://localhost:8081` quando `SERVER_PORT=8081`.

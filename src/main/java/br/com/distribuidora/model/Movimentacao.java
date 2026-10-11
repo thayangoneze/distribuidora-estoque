@@ -1,4 +1,4 @@
-package br.com.distribuidora;
+package br.com.distribuidora.model;
 
 import jakarta.persistence.*;
 import java.time.Instant;
