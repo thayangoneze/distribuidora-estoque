@@ -28,6 +28,9 @@ button.perigo { background: #a22020; }
 button.perigo:hover { background: #7f1919; }
 button:disabled { opacity: .5; cursor: not-allowed; }
 .acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+dialog { border: 1px solid #dce6e0; border-radius: 12px; padding: 24px; max-width: 460px; width: calc(100% - 32px); color: #172b27; }
+dialog::backdrop { background: #172b2799; }
+dialog p { margin: 0; }
 .tabela-painel { margin-top: 16px; }
 .titulo-linha h2 { margin: 0; }
 .rolagem { overflow-x: auto; margin-top: 16px; }

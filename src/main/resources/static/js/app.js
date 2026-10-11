@@ -121,14 +121,32 @@ $('#form-movimentacao').addEventListener('submit', async evento => {
 });
 $('#periodo').addEventListener('change', atualizar);
 $('#atualizar').addEventListener('click', atualizar);
-$('#limpar-estoque').addEventListener('click', async evento => {
-  if (prompt('Esta ação apaga TODOS os produtos e seus históricos de movimentação. Para confirmar, digite LIMPAR:') !== 'LIMPAR') return;
-  const botao = evento.currentTarget;
+const dialogLimpeza = $('#dialog-limpeza');
+$('#limpar-estoque').addEventListener('click', () => {
+  $('#form-limpeza').reset();
+  $('#erro-limpeza').hidden = true;
+  dialogLimpeza.showModal();
+  $('#senha-administrador').focus();
+});
+$('#cancelar-limpeza').addEventListener('click', () => dialogLimpeza.close());
+dialogLimpeza.addEventListener('close', () => $('#form-limpeza').reset());
+$('#form-limpeza').addEventListener('submit', async evento => {
+  evento.preventDefault();
+  const botao = evento.currentTarget.querySelector('button[type="submit"]');
   botao.disabled = true;
   try {
-    await requisitar('/api/produtos', { method: 'DELETE' });
+    const resposta = await fetch('/api/produtos', {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ senha: $('#senha-administrador').value })
+    });
+    if (resposta.status === 403) throw new Error('Senha do administrador incorreta.');
+    if (!resposta.ok) throw new Error(`Não foi possível limpar o estoque (HTTP ${resposta.status}).`);
+    dialogLimpeza.close();
     avisar('Todos os produtos e históricos foram apagados.');
     await atualizar();
-  } catch (erro) { avisar(erro.message, true); botao.disabled = false; }
+  } catch (erro) {
+    $('#erro-limpeza').textContent = erro.message;
+    $('#erro-limpeza').hidden = false;
+  } finally { botao.disabled = false; }
 });
 atualizar();

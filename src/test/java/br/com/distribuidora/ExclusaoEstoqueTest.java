@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     "spring.datasource.url=jdbc:h2:mem:exclusao;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
     "spring.datasource.driver-class-name=org.h2.Driver",
     "spring.datasource.username=sa", "spring.datasource.password=",
-    "spring.jpa.hibernate.ddl-auto=create-drop"
+    "spring.jpa.hibernate.ddl-auto=create-drop", "estoque.senha-administrador=123456"
 })
 @AutoConfigureMockMvc
 @Transactional
@@ -55,13 +55,24 @@ class ExclusaoEstoqueTest {
 
     @Test void limparRemoveProdutosEHistoricosEPodeSerRepetido() throws Exception {
         criar("Primeiro"); criar("Outro");
-        mvc.perform(delete("/api/produtos")).andExpect(status().isNoContent());
+        mvc.perform(delete("/api/produtos").contentType("application/json").content("{\"senha\":\"123456\"}")).andExpect(status().isNoContent());
         assertEquals(0, produtos.count()); assertEquals(0, movimentacoes.count());
         assertTrue(estoque.sugestoes(30).isEmpty());
-        mvc.perform(delete("/api/produtos")).andExpect(status().isNoContent());
+        mvc.perform(delete("/api/produtos").contentType("application/json").content("{\"senha\":\"123456\"}")).andExpect(status().isNoContent());
     }
 
     @Test void apagarInexistenteRetorna404() throws Exception {
         mvc.perform(delete("/api/produtos/999999")).andExpect(status().isNotFound());
+    }
+    @Test void senhaIncorretaPreservaProdutosEHistoricos() throws Exception {
+        criar("Preservado");
+        mvc.perform(delete("/api/produtos").contentType("application/json").content("{\"senha\":\"errada\"}")).andExpect(status().isForbidden());
+        assertEquals(1, produtos.count()); assertEquals(2, movimentacoes.count());
+    }
+    @Test void semSenhaNaoPermiteLimpeza() throws Exception {
+        criar("Preservado");
+        mvc.perform(delete("/api/produtos")).andExpect(status().isBadRequest());
+        mvc.perform(delete("/api/produtos").contentType("application/json").content("{\"senha\":\"\"}")).andExpect(status().isBadRequest());
+        assertEquals(1, produtos.count()); assertEquals(2, movimentacoes.count());
     }
 }

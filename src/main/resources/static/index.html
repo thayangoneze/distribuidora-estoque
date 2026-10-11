@@ -55,5 +55,14 @@
       <div class="rolagem"><table><thead><tr><th>Produto</th><th>Média/dia</th><th>Ponto de reposição</th><th>Comprar</th><th>Observação</th></tr></thead><tbody id="lista-reposicao"></tbody></table></div>
     </section>
   </main>
+  <dialog id="dialog-limpeza" aria-labelledby="titulo-limpeza">
+    <form id="form-limpeza">
+      <h2 id="titulo-limpeza">Limpar todo o estoque</h2>
+      <p>Todos os produtos e seus históricos serão apagados. Esta ação não pode ser desfeita.</p>
+      <label>Senha do administrador<input id="senha-administrador" name="senha" type="password" required autocomplete="current-password"></label>
+      <p id="erro-limpeza" role="alert" class="critico" hidden></p>
+      <div class="acoes"><button type="button" class="secundario" id="cancelar-limpeza">Cancelar</button><button type="submit" class="perigo">Apagar todo o estoque</button></div>
+    </form>
+  </dialog>
 </body>
 </html>
