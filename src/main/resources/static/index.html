@@ -8,33 +8,46 @@
   <script src="/js/app.js" defer></script>
 </head>
 <body>
-  <header class="topo">
-    <div class="container"><span class="marca">Distribuidora do Gaúcho</span><span class="subtitulo">Controle de estoque</span></div>
-  </header>
-  <main class="container">
-    <h1>Painel de estoque</h1>
-    <p class="intro">Registre movimentações e acompanhe o que precisa de atenção.</p>
+  <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+  <aside class="lateral" aria-label="Navegação principal">
+    <a class="identidade" href="#visao-geral"><span class="simbolo" aria-hidden="true">G.</span><span>Gaúcho<span class="marca-detalhe">GESTÃO DE ESTOQUE</span></span></a>
+    <span class="rotulo-menu">ESPAÇO DE TRABALHO</span>
+    <nav>
+      <a href="#visao-geral" class="nav-link ativo" aria-current="location"><span aria-hidden="true">▦</span>Visão geral</a>
+      <a href="#operacoes" class="nav-link"><span aria-hidden="true">↔</span>Movimentações</a>
+      <a href="#estoque" class="nav-link"><span aria-hidden="true">▤</span>Produtos</a>
+      <a href="#reposicao" class="nav-link"><span aria-hidden="true">↗</span>Reposição</a>
+    </nav>
+    <div class="rodape-lateral"><span class="avatar" aria-hidden="true">G</span><div>Distribuidora do Gaúcho<small>Painel de gestão</small></div></div>
+  </aside>
+  <div class="area-principal" id="conteudo">
+    <header class="topo"><span>GESTÃO <span class="barra">/</span> ESTOQUE</span><span class="etiqueta-topo">Painel do gestor</span></header>
+    <main class="container">
+      <section class="hero" id="visao-geral">
+        <div><span class="sobretitulo">SEU ESTOQUE, SOB CONTROLE</span><h1>Uma visão clara.<br>Melhores decisões.</h1><p class="intro">Acompanhe seus produtos, registre movimentações<br class="quebra-desktop"> e planeje a próxima reposição.</p><a href="#operacoes" class="atalho">Registrar movimentação <span aria-hidden="true">↗</span></a></div>
+        <div class="hero-grafico" aria-hidden="true"><div class="caixa caixa-1"></div><div class="caixa caixa-2"></div><div class="caixa caixa-3"></div><span>ESTOQUE / ORGANIZAÇÃO / CONTROLE</span></div>
+      </section>
     <div id="mensagem" role="status" aria-live="polite" hidden></div>
     <section class="resumo" aria-label="Resumo">
-      <div class="cartao"><span>Produtos</span><strong id="total-produtos">—</strong></div>
-      <div class="cartao"><span>Estoque crítico</span><strong id="total-criticos">—</strong></div>
-      <div class="cartao"><span>Sugestões de compra</span><strong id="total-sugestoes">—</strong></div>
+      <div class="cartao"><span>Produtos cadastrados <span class="icone-cartao" aria-hidden="true">▤</span></span><strong id="total-produtos">—</strong><small>Itens no seu catálogo</small></div>
+      <div class="cartao"><span>Estoque crítico <span class="icone-cartao" aria-hidden="true">!</span></span><strong id="total-criticos">—</strong><small>Produtos que exigem atenção</small></div>
+      <div class="cartao"><span>Sugestões de compra <span class="icone-cartao" aria-hidden="true">↗</span></span><strong id="total-sugestoes">—</strong><small>Itens recomendados para reposição</small></div>
     </section>
-    <div class="grade">
+    <div class="grade" id="operacoes">
       <section class="painel">
-        <h2>Cadastrar produto</h2>
+        <div class="cabecalho-painel"><span class="numero">01</span><div><h2>Novo produto</h2><p>Cadastre um item e defina os parâmetros de reposição.</p></div></div>
         <form id="form-produto">
           <label>Nome do produto<input name="nome" required maxlength="255" placeholder="Ex.: Refrigerante 2 L"></label>
           <div class="campos">
-            <label>Estoque de segurança<input name="estoqueSeguranca" type="number" min="0" required value="10"></label>
-            <label>Prazo de entrega (dias)<input name="prazoEntregaDias" type="number" min="0" required value="3"></label>
-            <label>Cobertura desejada (dias)<input name="coberturaDesejadaDias" type="number" min="0" required value="7"></label>
+            <label>Estoque de segurança <span class="dica">Quantidade mínima de proteção</span><input name="estoqueSeguranca" type="number" min="0" required value="10"></label>
+            <label>Prazo de entrega <span class="dica">Tempo do fornecedor, em dias</span><input name="prazoEntregaDias" type="number" min="0" required value="3"></label>
+            <label>Cobertura desejada <span class="dica">Dias adicionais para abastecer</span><input name="coberturaDesejadaDias" type="number" min="0" required value="7"></label>
           </div>
           <button type="submit">Cadastrar produto</button>
         </form>
       </section>
       <section class="painel">
-        <h2>Registrar movimentação</h2>
+        <div class="cabecalho-painel"><span class="numero">02</span><div><h2>Movimentar estoque</h2><p>Registre o que entra e o que sai da distribuidora.</p></div></div>
         <form id="form-movimentacao">
           <label>Produto<select name="produtoId" id="produto-id" required><option value="">Selecione um produto</option></select></label>
           <div class="campos dois">
@@ -45,16 +58,18 @@
         </form>
       </section>
     </div>
-    <section class="painel tabela-painel">
-      <div class="titulo-linha"><h2>Produtos em estoque</h2><div class="acoes"><button type="button" class="secundario" id="atualizar">Atualizar</button><button type="button" class="perigo" id="limpar-estoque" disabled>Limpar todo o estoque</button></div></div>
-      <div class="rolagem"><table><thead><tr><th>Produto</th><th>Saldo</th><th>Segurança</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="lista-produtos"></tbody></table></div>
+    <section class="painel tabela-painel" id="estoque">
+      <div class="titulo-linha"><div><span class="sobretitulo escuro">CATÁLOGO</span><h2>Produtos em estoque</h2></div><div class="acoes"><button type="button" class="secundario" id="atualizar">Atualizar</button><button type="button" class="perigo" id="limpar-estoque" disabled>Limpar todo o estoque</button></div></div>
+      <div class="rolagem"><table><thead><tr><th>Produto</th><th>Saldo</th><th>Estoque de segurança</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="lista-produtos"></tbody></table></div>
     </section>
-    <section class="painel tabela-painel">
-      <div class="titulo-linha"><h2>Sugestão de reposição</h2><label class="periodo">Analisar últimos <select id="periodo"><option value="30">30 dias</option><option value="60">60 dias</option><option value="90">90 dias</option></select></label></div>
+    <section class="painel tabela-painel" id="reposicao">
+      <div class="titulo-linha"><div><span class="sobretitulo escuro">PLANEJAMENTO</span><h2>Sugestão de reposição</h2></div><label class="periodo">Analisar últimos <select id="periodo"><option value="30">30 dias</option><option value="60">60 dias</option><option value="90">90 dias</option></select></label></div>
       <p class="ajuda">Itens sem saída nos últimos 60 dias são sinalizados e não entram na sugestão automática.</p>
-      <div class="rolagem"><table><thead><tr><th>Produto</th><th>Média/dia</th><th>Ponto de reposição</th><th>Comprar</th><th>Observação</th></tr></thead><tbody id="lista-reposicao"></tbody></table></div>
+      <div class="rolagem"><table><thead><tr><th>Produto</th><th>Média/dia</th><th>Ponto de reposição</th><th>Quantidade sugerida</th><th>Observação</th></tr></thead><tbody id="lista-reposicao"></tbody></table></div>
     </section>
+    <footer class="rodape-pagina">Distribuidora do Gaúcho <span>Controle de estoque e reposição</span></footer>
   </main>
+  </div>
   <dialog id="dialog-limpeza" aria-labelledby="titulo-limpeza">
     <form id="form-limpeza">
       <h2 id="titulo-limpeza">Limpar todo o estoque</h2>

@@ -53,3 +53,7 @@ Para baixar a organização no computador, com a aplicação parada e a branch `
 O botão **Apagar** de cada linha exclui o produto e seu histórico de movimentações após confirmação. **Limpar todo o estoque** apaga todos os produtos e seus históricos; exige a senha do administrador para confirmar (provisoriamente `123456`). Essas operações são permanentes e não significam apenas zerar os saldos.
 
 API: `DELETE /api/produtos/{id}` apaga um produto (404 se inexistente); `DELETE /api/produtos` limpa o estoque, recebendo JSON com o campo `senha`; uma senha incorreta retorna HTTP 403. Configure outra senha pelo ambiente `ADMIN_DELETE_PASSWORD`. Sucesso retorna HTTP 204 sem conteúdo. O histórico é removido antes dos produtos, na mesma transação. Os testes de integração usam exclusivamente H2 em memória: `mvn clean test`.
+
+## Interface
+
+O painel utiliza preto, branco e tons de cinza, com cartões e campos arredondados. A navegação permite acessar visão geral, movimentações, produtos e reposição. A interface adapta os formulários a telas menores e mantém tabelas com rolagem horizontal quando necessário.

@@ -150,3 +150,12 @@ $('#form-limpeza').addEventListener('submit', async evento => {
   } finally { botao.disabled = false; }
 });
 atualizar();
+
+const linksNavegacao = document.querySelectorAll('.nav-link');
+linksNavegacao.forEach(link => link.addEventListener('click', () => {
+  linksNavegacao.forEach(item => {
+    item.classList.toggle('ativo', item === link);
+    if (item === link) item.setAttribute('aria-current', 'location');
+    else item.removeAttribute('aria-current');
+  });
+}));
