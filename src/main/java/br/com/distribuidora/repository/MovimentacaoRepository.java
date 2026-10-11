@@ -13,5 +13,8 @@ public interface MovimentacaoRepository extends JpaRepository<Movimentacao, Long
     @Modifying
     @Query("delete from Movimentacao m where m.produto.id in :ids")
     void apagarPorProdutos(@Param("ids") List<Long> ids);
+    List<Movimentacao> findByCriadaEmBetweenOrderByCriadaEmAsc(Instant inicio, Instant fim);
+    @Query("select min(m.criadaEm) from Movimentacao m")
+    Instant primeiraMovimentacao();
     List<Movimentacao> findByTipoAndCriadaEmGreaterThanEqual(Movimentacao.Tipo tipo, Instant inicio);
 }

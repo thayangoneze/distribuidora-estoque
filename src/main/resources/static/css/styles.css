@@ -31,4 +31,12 @@ label,input,select,button,th,td{font-size:12px}
 .cartao-login .ajuda{font-size:12px;margin-top:12px}
 #mensagem-login{font-size:12px;background:#eee;border-radius:10px;padding:12px;line-height:1.6}
 .rodape-login{font-size:10px;color:#777;text-align:center;margin:26px 0 0}
+.perguntas-rapidas{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}
+.perguntas-rapidas button{font-size:11px;text-align:left}
+.conversa{background:#fafafa;border:1px solid #e5e5e5;border-radius:16px;padding:18px;margin:16px 0;min-height:120px;max-height:480px;overflow-y:auto}
+.mensagem-chat{border:1px solid #e5e5e5;border-radius:14px;padding:14px;margin:10px 0;max-width:90%;background:white;font-size:12px}
+.mensagem-chat strong{font-size:11px}.mensagem-chat p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7;margin:8px 0 0}
+.pergunta-chat{margin-left:auto;background:#181818;color:white;border-color:#181818}
+textarea{resize:vertical;min-height:90px;max-height:300px;padding:12px;border:1px solid #ddd;border-radius:12px;font:inherit;font-size:13px;width:100%}
+textarea:focus{outline:2px solid #222;outline-offset:1px}
 @media(max-width:760px){.rodape-lateral{display:flex;margin:0;padding:0;border:0}.rodape-lateral .avatar,.rodape-lateral div{display:none}}

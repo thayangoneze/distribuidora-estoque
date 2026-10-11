@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     "spring.datasource.url=jdbc:h2:mem:exclusao;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
     "spring.datasource.driver-class-name=org.h2.Driver",
     "spring.datasource.username=sa", "spring.datasource.password=",
-    "spring.jpa.hibernate.ddl-auto=create-drop", "estoque.senha-administrador=123456"
+    "spring.jpa.hibernate.ddl-auto=create-drop", "estoque.senha-administrador=123456", "estoque.ia.api-key="
 })
 @AutoConfigureMockMvc
 @Transactional
@@ -38,6 +38,7 @@ class ExclusaoEstoqueTest {
     @Autowired MovimentacaoRepository movimentacoes;
     @Autowired EstoqueService estoque;
     @Autowired MockMvc mvc;
+    @Autowired br.com.distribuidora.service.ContextoEstoqueService contextoIa;
 
     private Produto criar(String nome) {
         Produto p = new Produto(); p.nome = nome;
@@ -109,5 +110,25 @@ class ExclusaoEstoqueTest {
             .contentType("application/json").content("{\"senha\":\"123456\"}"))
             .andExpect(status().isForbidden());
         assertEquals(1, produtos.count());
+    }
+    @Test void contextoIaLeEstoqueEHistoricoSemAlterarDados() {
+        Produto produto = criar("Refrigerante");
+        var contexto = contextoIa.consultar(30);
+        assertEquals(1, contexto.produtos().size());
+        var item = contexto.produtos().get(0);
+        assertEquals(produto.id, item.id()); assertEquals(32, item.saldo());
+        assertEquals(40, item.movimentacoesDiarias().get(0).entradas());
+        assertEquals(8, item.movimentacoesDiarias().get(0).saidas());
+        assertNotNull(contexto.primeiraMovimentacaoRegistrada());
+        assertEquals(1, produtos.count()); assertEquals(2, movimentacoes.count());
+    }
+    @Test void assistenteProtegidoEInformaAusenciaDeChave() throws Exception {
+        mvc.perform(get("/api/assistente/status")).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/assistente/perguntas").with(user("Administrador").roles("ADMIN")).with(csrf())
+            .contentType("application/json").content("{\"pergunta\":\"Quais produtos estão acabando?\",\"periodoDias\":30}"))
+            .andExpect(status().isServiceUnavailable());
+        mvc.perform(post("/api/assistente/perguntas").with(user("Administrador").roles("ADMIN")).with(csrf())
+            .contentType("application/json").content("{\"pergunta\":\"\",\"periodoDias\":120}"))
+            .andExpect(status().isBadRequest());
     }
 }

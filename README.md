@@ -63,3 +63,24 @@ O painel utiliza preto, branco e tons de cinza, com cartões e campos arredondad
 Ao abrir o painel, entre como **Administrador** com a senha provisória **123456**. A autenticação por sessão protege a interface e a API; o botão **Sair** encerra a sessão. A senha é configurada pelo ambiente `ADMIN_DELETE_PASSWORD` e também é utilizada na confirmação de limpeza completa do estoque.
 
 Requisições de alteração exigem um token CSRF. A interface o obtém automaticamente em `GET /csrf`. Para clientes de API, faça login com cookies de sessão e envie o token no cabeçalho indicado pela resposta de `/csrf`.
+
+## Assistente de estoque com IA
+
+A seção **Assistente de estoque** permite perguntar sobre saldos, entradas, saídas e reposição. O servidor consulta o PostgreSQL a cada pergunta e envia um resumo dos produtos e das movimentações diárias do período à API Responses da OpenAI. A chave permanece no servidor. O modelo padrão é `gpt-4.1-mini`, configurável por `OPENAI_MODEL`.
+
+Para ativar, pare o sistema e configure no mesmo terminal PowerShell, além da conexão com o banco e da porta:
+
+```powershell
+$env:OPENAI_API_KEY = 'SUA_CHAVE_DA_API'
+mvn clean spring-boot:run
+```
+
+Não grave a chave no código ou no GitHub. Sem uma chave, o sistema continua funcionando e informa que a integração de IA precisa ser ativada. A integração requer acesso à API OpenAI; uma sessão no ChatGPT não configura automaticamente essa chave. O uso do provedor é cobrado conforme sua conta de API.
+
+A consulta considera datas no fuso America/Sao_Paulo e aceita períodos de 1 a 90 dias (a tela oferece 30/60/90). O contexto inclui saldos, histórico diário, primeira movimentação registrada e as sugestões calculadas de 30 dias. Saídas podem representar vendas ou perdas; não há dados de faturamento, preços ou pedidos pendentes nesta etapa. A IA deve explicar essa limitação e não inventar números. As recomendações devem ser revisadas pelo gestor.
+
+Esta etapa é de consulta: a IA não executa SQL e não altera o banco. O histórico da conversa fica apenas na memória da página, limitado às últimas oito mensagens por requisição; mudar o período inicia nova conversa. Os dados enviados são somente do estoque, sem credenciais de acesso. O limite inicial é 500 produtos e 240 mil caracteres de contexto; limites excedidos geram uma mensagem, sem truncar silenciosamente o catálogo. As chamadas usam `store=false`.
+
+Rotas protegidas: `GET /api/assistente/status` informa se a chave foi configurada (não comprova que ela é válida); `POST /api/assistente/perguntas` recebe `pergunta`, `periodoDias` e `historico` opcional, exigindo sessão e CSRF.
+
+Testes de integração com H2 validam a leitura do contexto sem alterar registros, acesso autenticado e validação. Testes HTTP simulam respostas e erros do provedor, sem chamadas pagas. O teste ao vivo requer configurar uma chave real. Leitura de notas por imagem e modelo treinado de previsão de demanda ainda não estão implementados.
