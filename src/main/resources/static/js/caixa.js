@@ -26,6 +26,7 @@ function mostrarComprovante(venda) {
   $('#comprovante-venda').hidden=false;
 }
 function concluirVenda(venda) {
+  if(typeof encerrarCelular==='function')encerrarCelular();
   pendencia(null);carrinho.clear();$('#form-pagamento').reset();mostrarComprovante(venda);
   renderizarCarrinho();avisar(`Venda registrada. Troco: ${moeda(venda.troco)}.`);
 }
@@ -112,6 +113,7 @@ for(const id of ['desconto-caixa','recebido-caixa','pagamento-caixa'])$('#'+id).
 $('#cancelar-venda').addEventListener('click',()=>{
   if(ocupadoCaixa || envioPendente)return;
   if(carrinho.size && !confirm('Cancelar esta venda? O estoque ainda não foi alterado.'))return;
+  if(typeof encerrarCelular==='function')encerrarCelular();
   carrinho.clear();$('#form-pagamento').reset();renderizarCarrinho();$('#codigo-scanner').focus();
 });
 $('#form-pagamento').addEventListener('submit',async e=>{
