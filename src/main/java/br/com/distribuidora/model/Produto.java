@@ -25,5 +25,10 @@ public class Produto {
     @Column(precision=14, scale=2) public BigDecimal precoCusto;
     @DecimalMin("0") @Digits(integer=12, fraction=2)
     @Column(precision=14, scale=2) public BigDecimal precoVenda;
+    @ManyToMany(fetch=FetchType.EAGER)
+    @JoinTable(name="produto_fornecedor", joinColumns=@JoinColumn(name="produto_id"), inverseJoinColumns=@JoinColumn(name="fornecedor_id"))
+    @com.fasterxml.jackson.annotation.JsonProperty(access=com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY)
+    public Set<Fornecedor> fornecedores = new HashSet<>();
+    @Transient @Size(max=100) public Set<@NotNull @Positive Long> fornecedorIds = new HashSet<>();
     @Version public Long versao;
 }

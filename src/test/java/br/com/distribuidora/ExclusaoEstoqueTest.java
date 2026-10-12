@@ -34,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestExecutionListeners(listeners = {DependencyInjectionTestExecutionListener.class,
     TransactionalTestExecutionListener.class}, mergeMode = TestExecutionListeners.MergeMode.REPLACE_DEFAULTS)
 class ExclusaoEstoqueTest {
+    @Autowired br.com.distribuidora.repository.FornecedorRepository fornecedores;
     @Autowired ProdutoRepository produtos;
     @Autowired MovimentacaoRepository movimentacoes;
     @Autowired EstoqueService estoque;
@@ -136,6 +137,63 @@ class ExclusaoEstoqueTest {
         estoque.limparEstoque(); produtos.flush();
         assertEquals(0,produtos.count()); assertEquals(0,movimentacoes.count());
     }
+    private Long cadastrarFornecedor(String nome) throws Exception {
+        var res=mvc.perform(post("/api/fornecedores").with(user("Administrador").roles("ADMIN")).with(csrf())
+            .contentType("application/json").content(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(java.util.Map.of("nome",nome))))
+            .andExpect(status().isCreated()).andReturn();
+        return new com.fasterxml.jackson.databind.ObjectMapper().readTree(res.getResponse().getContentAsString()).get("id").asLong();
+    }
+    @Test void variasEmpresasPodemEntregarMesmoProdutoEAssistenteVeVinculos() throws Exception {
+        Long ambev=cadastrarFornecedor("Ambev"); Long coca=cadastrarFornecedor("Coca-Cola");
+        var res=mvc.perform(post("/api/produtos").with(user("Administrador").roles("ADMIN")).with(csrf())
+            .contentType("application/json").content("{\"nome\":\"Água\",\"saldo\":12,\"fornecedorIds\":["+ambev+","+coca+"]}"))
+            .andExpect(status().isCreated()).andReturn();
+        Long id=new com.fasterxml.jackson.databind.ObjectMapper().readTree(res.getResponse().getContentAsString()).get("id").asLong();
+        assertEquals(2,produtos.findById(id).orElseThrow().fornecedores.size());
+        assertEquals(java.util.List.of("Ambev","Coca-Cola"),contextoIa.consultar(30).produtos().get(0).fornecedores());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/produtos/"+id+"/fornecedores")
+            .with(user("Administrador").roles("ADMIN")).with(csrf()).contentType("application/json")
+            .content("{\"fornecedorIds\":["+coca+"]}")).andExpect(status().isOk());
+        assertEquals(1,produtos.findById(id).orElseThrow().fornecedores.size());
+        assertEquals(12,produtos.findById(id).orElseThrow().saldo); assertEquals(1,movimentacoes.count());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/produtos/"+id+"/fornecedores")
+            .with(user("Administrador").roles("ADMIN")).with(csrf()).contentType("application/json")
+            .content("{\"fornecedorIds\":[]}")).andExpect(status().isOk());
+        assertTrue(produtos.findById(id).orElseThrow().fornecedores.isEmpty());
+        assertEquals(2,fornecedores.count());
+    }
+    @Test void fornecedorExigeLoginCsrfENomeUnicoEValido() throws Exception {
+        mvc.perform(get("/api/fornecedores")).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/fornecedores").with(user("Administrador").roles("ADMIN")).contentType("application/json").content("{\"nome\":\"Ambev\"}"))
+            .andExpect(status().isForbidden());
+        cadastrarFornecedor("  Ambev  ");
+        mvc.perform(post("/api/fornecedores").with(user("Administrador").roles("ADMIN")).with(csrf())
+            .contentType("application/json").content("{\"nome\":\"AMBEV\"}")).andExpect(status().isConflict());
+        mvc.perform(post("/api/fornecedores").with(user("Administrador").roles("ADMIN")).with(csrf())
+            .contentType("application/json").content("{\"nome\":\"   \"}")).andExpect(status().isBadRequest());
+        assertEquals(1,fornecedores.count());
+    }
+    @Test void empresaInexistenteNaoCriaProdutoNemSaldoInicial() throws Exception {
+        mvc.perform(post("/api/produtos").with(user("Administrador").roles("ADMIN")).with(csrf())
+            .contentType("application/json").content("{\"nome\":\"Novo\",\"saldo\":12,\"fornecedorIds\":[999999]}"))
+            .andExpect(status().isBadRequest());
+        assertEquals(0,produtos.count()); assertEquals(0,movimentacoes.count());
+        Produto p=criar("Existente");
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/produtos/"+p.id+"/fornecedores")
+            .with(user("Administrador").roles("ADMIN")).with(csrf()).contentType("application/json")
+            .content("{\"fornecedorIds\":[999999]}")).andExpect(status().isBadRequest());
+        assertTrue(produtos.findById(p.id).orElseThrow().fornecedores.isEmpty());
+    }
+    @Test void limparEApagarProdutosPreservaEmpresasCompartilhadas() throws Exception {
+        Long id=cadastrarFornecedor("Ambev");
+        Produto p=criar("Primeiro"); Produto outro=criar("Segundo");
+        estoque.atualizarFornecedores(p.id,java.util.Set.of(id)); estoque.atualizarFornecedores(outro.id,java.util.Set.of(id)); produtos.flush();
+        estoque.apagarProduto(p.id); produtos.flush();
+        assertEquals(1,fornecedores.count()); assertEquals(1,produtos.findById(outro.id).orElseThrow().fornecedores.size());
+        estoque.limparEstoque(); produtos.flush();
+        assertEquals(0,produtos.count()); assertEquals(1,fornecedores.count());
+    }
+
     @Test void apagarUmProdutoRemoveSeuHistoricoEPreservaOutro() throws Exception {
         Produto primeiro = criar("Primeiro");
         Produto outro = criar("Outro");

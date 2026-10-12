@@ -50,11 +50,55 @@ function vazio(tbody, colunas, texto) {
   td.colSpan = colunas;
   td.textContent = texto;
 }
+let empresasFornecedoras = [];
+let produtoFornecedoresId;
+function selecionarFornecedores(container, ids = []) {
+  container.replaceChildren();
+  if (!empresasFornecedoras.length) { const p = document.createElement('p'); p.className = 'ajuda'; p.textContent = 'Nenhuma empresa cadastrada ainda.'; container.append(p); }
+  empresasFornecedoras.forEach(f => {
+    const label = document.createElement('label'); const input = document.createElement('input');
+    input.type = 'checkbox'; input.name = 'fornecedorIds'; input.value = f.id; input.checked = ids.includes(f.id);
+    label.append(input, document.createTextNode(f.nome)); container.append(label);
+  });
+}
+function fornecedoresSelecionados(form) { return [...form.querySelectorAll('input[name="fornecedorIds"]:checked')].map(c => Number(c.value)); }
+function abrirFornecedores(p) {
+  produtoFornecedoresId = p.id; $('#produto-fornecedores').textContent = p.nome;
+  selecionarFornecedores($('#fornecedores-edicao'), (p.fornecedores || []).map(f => f.id));
+  $('#erro-fornecedores').hidden = true; $('#dialog-fornecedores').showModal();
+}
+$('#cancelar-fornecedores').addEventListener('click', () => $('#dialog-fornecedores').close());
+$('#form-fornecedores-produto').addEventListener('submit', async e => {
+  e.preventDefault(); const botao = e.currentTarget.querySelector('button[type="submit"]'); botao.disabled = true;
+  try {
+    await requisitar(`/api/produtos/${produtoFornecedoresId}/fornecedores`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fornecedorIds: fornecedoresSelecionados(e.currentTarget) }) });
+    $('#dialog-fornecedores').close(); avisar('Fornecedores do produto atualizados.'); await atualizar();
+  } catch (erro) { $('#erro-fornecedores').textContent = erro.message; $('#erro-fornecedores').hidden = false; }
+  finally { botao.disabled = false; }
+});
+$('#form-fornecedor').addEventListener('submit', async e => {
+  e.preventDefault(); const form = e.currentTarget; const botao = form.querySelector('button[type="submit"]'); botao.disabled = true;
+  try {
+    await requisitar('/api/fornecedores', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome: form.elements.nome.value.trim() }) });
+    form.reset(); $('#status-fornecedor').textContent = 'Empresa cadastrada. Agora selecione-a no cadastro ou no botão Fornecedores do produto.'; $('#status-fornecedor').hidden = false;
+    await atualizar();
+  } catch (erro) { $('#status-fornecedor').textContent = erro.message; $('#status-fornecedor').hidden = false; }
+  finally { botao.disabled = false; }
+});
 async function atualizar() {
   try {
-    const [produtos, sugestoes] = await Promise.all([
-      requisitar('/api/produtos'), requisitar(`/api/reposicao?dias=${$('#periodo').value}`)
+    const [produtos, sugestoes, fornecedores] = await Promise.all([
+      requisitar('/api/produtos'), requisitar(`/api/reposicao?dias=${$('#periodo').value}`), requisitar('/api/fornecedores')
     ]);
+    empresasFornecedoras = fornecedores;
+    selecionarFornecedores($('#fornecedores-novo'), fornecedoresSelecionados($('#form-produto')));
+    const tabelaEmpresas = $('#lista-fornecedores'); tabelaEmpresas.replaceChildren();
+    fornecedores.forEach(f => {
+      const linha = document.createElement('tr'); celula(linha, f.nome);
+      celula(linha, produtos.filter(p => (p.fornecedores || []).some(v => v.id === f.id)).map(p => p.nome).join(', ') || 'Nenhum produto vinculado');
+      tabelaEmpresas.append(linha);
+    });
+    if (!fornecedores.length) vazio(tabelaEmpresas, 2, 'Cadastre a primeira empresa fornecedora.');
     $('#total-produtos').textContent = produtos.length;
     $('#total-criticos').textContent = produtos.filter(p => p.saldo <= p.estoqueSeguranca).length;
     $('#total-sugestoes').textContent = sugestoes.filter(s => s.quantidadeSugerida > 0).length;
@@ -73,6 +117,7 @@ async function atualizar() {
       celula(linha, moeda(p.precoVenda));
       celula(linha, p.estoqueSeguranca);
       celula(linha, (p.diasEntrega || []).sort((a,b) => a-b).map(d => ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'][d-1]).join(', ') || 'Não informado');
+      celula(linha, (p.fornecedores || []).map(f => f.nome).sort().join(', ') || 'Não informado');
       selo(linha, critico ? 'Estoque crítico' : 'Normal', critico ? 'alerta' : '');
       const acoes = document.createElement('td');
       const apagar = document.createElement('button');
@@ -95,13 +140,15 @@ async function atualizar() {
       precos.addEventListener('click', () => abrirPrecos(p));
       const entregas = document.createElement('button'); entregas.type = 'button'; entregas.className = 'secundario'; entregas.textContent = 'Entregas';
       entregas.addEventListener('click', () => abrirEntregas(p));
-      acoes.append(precos, entregas, apagar);
+      const vinculos = document.createElement('button'); vinculos.type = 'button'; vinculos.className = 'secundario'; vinculos.textContent = 'Fornecedores';
+      vinculos.setAttribute('aria-label', `Editar fornecedores de ${p.nome}`); vinculos.addEventListener('click', () => abrirFornecedores(p));
+      acoes.append(precos, entregas, vinculos, apagar);
       linha.append(acoes);
       lista.append(linha);
     });
     seletor.value = selecionado;
     $('#limpar-estoque').disabled = !produtos.length;
-    if (!produtos.length) vazio(lista, 8, 'Nenhum produto cadastrado.');
+    if (!produtos.length) vazio(lista, 9, 'Nenhum produto cadastrado.');
     const reposicao = $('#lista-reposicao');
     reposicao.replaceChildren();
     sugestoes.forEach(s => {
@@ -124,6 +171,7 @@ $('#form-produto').addEventListener('submit', async evento => {
   for (const campo of ['estoqueSeguranca', 'saldo']) dados[campo] = Number(dados[campo]);
   Object.assign(dados, dadosPrecos(form));
   dados.diasEntrega = [...form.querySelectorAll('input[name="diasEntrega"]:checked')].map(c => Number(c.value));
+  dados.fornecedorIds = fornecedoresSelecionados(form);
   delete dados.modoPreco;
   try {
     await requisitar('/api/produtos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });

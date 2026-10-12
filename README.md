@@ -105,3 +105,13 @@ Selecione dias da semana de entrega (1 = segunda até 7 = domingo). A ação **E
 A reposição considera a próxima entrega após hoje, no fuso America/Sao_Paulo, e o maior intervalo entre os dias cadastrados. Ponto = consumo médio × dias até próxima entrega + segurança; alvo = consumo médio × (dias até próxima entrega + maior intervalo entre entregas) + segurança, arredondando quantidades para cima. Não considera feriados nem horário de corte. Sem agenda, usa apenas a segurança, sem estimar um calendário; itens sem saída em 60 dias continuam bloqueados para recompra automática.
 
 No cadastro e na edição de preços, escolha **Digitar meu preço** ou **Calcular por porcentagem**. O acréscimo é sobre o custo, não margem sobre a venda. Fórmula: custo × (1 + percentual / 100), arredondado ao múltiplo de R$ 0,50 mais próximo; empate arredonda para cima. Ex.: R$ 10 + 32,5% resulta em R$ 13,50. O servidor calcula com BigDecimal; o preço manual não é arredondado. Voltar ao modo manual permite qualquer preço com até duas casas decimais.
+
+## Empresas fornecedoras
+
+Cadastre os nomes manualmente na seção **Fornecedores** (ex.: Ambev, Coca-Cola). Nomes vazios ou repetidos, ignorando maiúsculas e espaços repetidos, são rejeitados. Nenhuma empresa é pré-cadastrada automaticamente.
+
+Marque uma ou mais empresas no novo produto ou use **Fornecedores** na linha de um produto existente. A tabela mostra os fornecedores de cada produto; a seção de empresas mostra os produtos fornecidos por cada uma. O vínculo é muitos para muitos: cada produto pode ser entregue por várias empresas, e cada empresa pode fornecer vários produtos. Remover um vínculo não altera o saldo. Apagar produtos ou limpar o estoque preserva as empresas cadastradas.
+
+Os dias de entrega continuam configurados por produto; esta etapa não estabelece agendas diferentes por empresa. Produtos anteriores ficam sem fornecedor até serem vinculados. O assistente recebe os nomes dos fornecedores reais de cada produto e pode responder perguntas como “Quais produtos a Ambev entrega?”.
+
+API autenticada: `GET/POST /api/fornecedores` e `PUT /api/produtos/{id}/fornecedores` com `fornecedorIds`. O cadastro de produto também aceita `fornecedorIds`. As rotas de escrita exigem CSRF; IDs inexistentes são rejeitados sem gravar cadastro ou saldo parcial.

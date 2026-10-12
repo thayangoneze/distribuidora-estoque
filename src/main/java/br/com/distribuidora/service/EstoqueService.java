@@ -21,8 +21,9 @@ import java.util.stream.Collectors;
 public class EstoqueService {
     private final ProdutoRepository produtos;
     private final MovimentacaoRepository movimentacoes;
-    public EstoqueService(ProdutoRepository produtos, MovimentacaoRepository movimentacoes) {
-        this.produtos = produtos; this.movimentacoes = movimentacoes;
+    private final FornecedorService fornecedores;
+    public EstoqueService(ProdutoRepository produtos, MovimentacaoRepository movimentacoes, FornecedorService fornecedores) {
+        this.produtos = produtos; this.movimentacoes = movimentacoes; this.fornecedores = fornecedores;
     }
     public static BigDecimal calcularVenda(BigDecimal custo, BigDecimal percentual) {
         if (custo == null || percentual == null)
@@ -40,9 +41,17 @@ public class EstoqueService {
         if (p.diasEntrega == null) p.diasEntrega = new HashSet<>();
         if (p.calcularPrecoVenda) p.precoVenda = calcularVenda(p.precoCusto, p.percentualAcrescimo);
         else p.percentualAcrescimo = null;
+        p.fornecedores = fornecedores.resolver(p.fornecedorIds);
         Produto salvo = produtos.save(p);
         if (p.saldo > 0) movimentacoes.save(new Movimentacao(salvo, Movimentacao.Tipo.SALDO_INICIAL, p.saldo));
         return salvo;
+    }
+    @Transactional
+    public Produto atualizarFornecedores(Long id, Set<Long> ids) {
+        Produto p = produtos.buscarParaAtualizar(id).orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto não encontrado"));
+        p.fornecedores = fornecedores.resolver(ids);
+        return produtos.save(p);
     }
     @Transactional
     public Produto atualizarEntregas(Long id, Set<Integer> dias) {

@@ -42,3 +42,5 @@ textarea:focus{outline:2px solid #222;outline-offset:1px}
 @media(max-width:760px){.rodape-lateral{display:flex;margin:0;padding:0;border:0}.rodape-lateral .avatar,.rodape-lateral div{display:none}}
 
 .dias-entrega{border:1px solid #ddd;border-radius:14px;padding:16px;margin:16px 0;display:flex;flex-wrap:wrap;gap:12px}.dias-entrega legend{font-size:13px;font-weight:600;padding:0 6px}.dias-entrega label{display:flex;align-items:center;gap:6px;margin:0}.dias-entrega input{width:18px;min-height:18px;margin:0}.campo-percentual[hidden],.ajuda-percentual[hidden]{display:none}input[readonly]{background:#f3f3f3}
+
+.selecao-fornecedores{border:1px solid #ddd;border-radius:14px;padding:16px;margin:16px 0}.selecao-fornecedores legend{font-size:13px;font-weight:600;padding:0 6px}.selecao-fornecedores>div{display:flex;gap:12px;flex-wrap:wrap}.selecao-fornecedores label{display:flex;align-items:center;gap:6px;margin:0}.selecao-fornecedores input{width:18px;min-height:18px;margin:0}#form-fornecedor{max-width:480px;margin:20px 0}

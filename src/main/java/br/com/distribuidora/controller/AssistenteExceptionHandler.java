@@ -4,7 +4,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.ProblemDetail;
 
-@RestControllerAdvice(assignableTypes = {AssistenteController.class, EstoqueController.class})
+@RestControllerAdvice(assignableTypes = {AssistenteController.class, EstoqueController.class, FornecedorController.class})
 public class AssistenteExceptionHandler {
     @ExceptionHandler(ResponseStatusException.class)
     public ProblemDetail tratar(ResponseStatusException e) {
