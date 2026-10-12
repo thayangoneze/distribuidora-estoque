@@ -54,7 +54,8 @@ public class GeminiEstoqueClient {
             unidadeEstoque. Custo é o último custo cadastrado/recebido, não custo médio. Valores nulos são
             desconhecidos. Diferença de preços não é lucro líquido; não há faturamento ou despesas reais.
             Não altere nem afirme ter alterado o banco.
-            fornecedores contém empresas cadastradas para entregar cada produto; não invente vínculos.
+            fornecedores contém nome e diasEntrega de cada empresa vinculada; não invente vínculos.
+            Os diasEntrega do produto são a união dos dias cadastrados nessas empresas.
             diasEntrega usa 1=segunda até 7=domingo. Sem dias cadastrados não há previsão de entrega.
             Sugestões consideram a próxima entrega após hoje e o maior intervalo entre entregas;
             não consideram feriados ou horário de corte. Saldo inicial não é venda nem recebimento do período.

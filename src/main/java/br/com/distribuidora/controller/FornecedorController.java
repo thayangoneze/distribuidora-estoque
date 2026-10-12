@@ -12,6 +12,10 @@ public class FornecedorController {
     private final FornecedorService service;
     public FornecedorController(FornecedorService service) { this.service=service; }
     @GetMapping public List<Fornecedor> listar() { return service.listar(); }
+    @PutMapping("/{id}/entregas")
+    public Fornecedor entregas(@PathVariable Long id, @Valid @RequestBody br.com.distribuidora.dto.DiasEntrega dados) {
+        return service.atualizarEntregas(id,dados.diasEntrega());
+    }
     @PostMapping @ResponseStatus(HttpStatus.CREATED)
-    public Fornecedor criar(@Valid @RequestBody NovoFornecedor dados) { return service.criar(dados.nome()); }
+    public Fornecedor criar(@Valid @RequestBody NovoFornecedor dados) { return service.criar(dados.nome(),dados.diasEntrega()); }
 }

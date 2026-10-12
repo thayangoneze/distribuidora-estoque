@@ -34,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestExecutionListeners(listeners = {DependencyInjectionTestExecutionListener.class,
     TransactionalTestExecutionListener.class}, mergeMode = TestExecutionListeners.MergeMode.REPLACE_DEFAULTS)
 class ExclusaoEstoqueTest {
+    @Autowired br.com.distribuidora.service.FornecedorService fornecedorService;
     @Autowired br.com.distribuidora.repository.FornecedorRepository fornecedores;
     @Autowired ProdutoRepository produtos;
     @Autowired MovimentacaoRepository movimentacoes;
@@ -80,19 +81,15 @@ class ExclusaoEstoqueTest {
             .andExpect(status().isCreated()).andReturn();
         Long id=new com.fasterxml.jackson.databind.ObjectMapper().readTree(resposta.getResponse().getContentAsString()).get("id").asLong();
         var p=produtos.findById(id).orElseThrow(); assertEquals(24,p.saldo);
-        assertEquals(java.util.Set.of(2,5),p.diasEntrega);
+        assertTrue(p.getDiasEntrega().isEmpty());
         assertEquals(0,new java.math.BigDecimal("13.50").compareTo(p.precoVenda));
         assertEquals(Movimentacao.Tipo.SALDO_INICIAL,movimentacoes.findAll().get(0).tipo);
         assertEquals(24,movimentacoes.findAll().get(0).quantidade);
         assertTrue(contextoIa.consultar(30).produtos().get(0).movimentacoesDiarias().isEmpty());
-        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/produtos/"+id+"/entregas")
-            .with(user("Administrador").roles("ADMIN")).with(csrf()).contentType("application/json")
-            .content("{\"diasEntrega\":[1,4]}")).andExpect(status().isOk());
-        assertEquals(java.util.Set.of(1,4),produtos.findById(id).orElseThrow().diasEntrega);
         assertEquals(24,produtos.findById(id).orElseThrow().saldo);
     }
     @Test void cadastroRejeitaSaldoAgendaEPercentualInvalidos() throws Exception {
-        for(String extras:java.util.List.of("\"saldo\":-1","\"diasEntrega\":[8]","\"diasEntrega\":[null]",
+        for(String extras:java.util.List.of("\"saldo\":-1",
             "\"percentualAcrescimo\":-5","\"calcularPrecoVenda\":true,\"precoCusto\":10")) {
             mvc.perform(post("/api/produtos").with(user("Administrador").roles("ADMIN")).with(csrf())
                 .contentType("application/json").content("{\"nome\":\"Inválido\","+extras+"}"))
@@ -124,18 +121,43 @@ class ExclusaoEstoqueTest {
         assertEquals(7,EstoqueService.diasAteEntrega(java.util.Set.of(1),segunda));
         assertEquals(1,EstoqueService.maiorIntervaloEntrega(java.util.Set.of(1,2,3,4,5,6,7)));
         assertEquals(0,EstoqueService.diasAteEntrega(java.util.Set.of(),segunda));
-        Produto p=criar("Agenda"); p.diasEntrega=new java.util.HashSet<>(java.util.Set.of(1,4)); p.estoqueSeguranca=5;
+        Produto p=criar("Agenda"); p.fornecedores.add(fornecedorService.criar("Agenda fornecedor",java.util.Set.of(1,4))); p.estoqueSeguranca=5;
         p.saldo=0; produtos.saveAndFlush(p);
-        int espera=EstoqueService.diasAteEntrega(p.diasEntrega,java.time.LocalDate.now(java.time.ZoneId.of("America/Sao_Paulo")));
+        int espera=EstoqueService.diasAteEntrega(p.getDiasEntrega(),java.time.LocalDate.now(java.time.ZoneId.of("America/Sao_Paulo")));
         var sugestao=estoque.sugestoes(30).get(0);
         assertEquals((int)Math.ceil((8.0/30)*espera)+5,sugestao.pontoReposicao());
         assertEquals((int)Math.ceil((8.0/30)*(espera+4))+5,sugestao.quantidadeSugerida());
     }
 
     @Test void limparProdutosComDiasDeEntregaRemoveAgendaSemErro() {
-        Produto p=criar("Com agenda"); p.diasEntrega=new java.util.HashSet<>(java.util.Set.of(2,5)); produtos.saveAndFlush(p);
+        Produto p=criar("Com agenda"); p.fornecedores.add(fornecedorService.criar("Empresa com agenda",java.util.Set.of(2,5))); produtos.saveAndFlush(p);
         estoque.limparEstoque(); produtos.flush();
         assertEquals(0,produtos.count()); assertEquals(0,movimentacoes.count());
+    }
+    @Test void agendaDaEmpresaAtualizaTodosOsProdutosECombinaVariosFornecedores() throws Exception {
+        Long a=cadastrarFornecedor("Ambev"); Long c=cadastrarFornecedor("Coca-Cola");
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/fornecedores/"+a+"/entregas")
+            .with(user("Administrador").roles("ADMIN")).with(csrf()).contentType("application/json")
+            .content("{\"diasEntrega\":[2,5]}")).andExpect(status().isOk());
+        Produto p=criar("Um"); Produto outro=criar("Dois");
+        estoque.atualizarFornecedores(p.id,java.util.Set.of(a,c)); estoque.atualizarFornecedores(outro.id,java.util.Set.of(a));
+        assertEquals(java.util.Set.of(2,5),produtos.findById(p.id).orElseThrow().getDiasEntrega());
+        fornecedorService.atualizarEntregas(c,java.util.Set.of(1));
+        assertEquals(java.util.Set.of(1,2,5),produtos.findById(p.id).orElseThrow().getDiasEntrega());
+        fornecedorService.atualizarEntregas(a,java.util.Set.of(4));
+        assertEquals(java.util.Set.of(1,4),produtos.findById(p.id).orElseThrow().getDiasEntrega());
+        assertEquals(java.util.Set.of(4),produtos.findById(outro.id).orElseThrow().getDiasEntrega());
+        assertEquals(32,produtos.findById(p.id).orElseThrow().saldo);
+    }
+    @Test void cadastroDeEmpresaValidaDiasEPermiteAgendaInicial() throws Exception {
+        for(String dias:java.util.List.of("[0]","[8]","[null]"))
+            mvc.perform(post("/api/fornecedores").with(user("Administrador").roles("ADMIN")).with(csrf())
+                .contentType("application/json").content("{\"nome\":\"Inválido\",\"diasEntrega\":"+dias+"}"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/fornecedores").with(user("Administrador").roles("ADMIN")).with(csrf())
+            .contentType("application/json").content("{\"nome\":\"Empresa\",\"diasEntrega\":[1,3]}"))
+            .andExpect(status().isCreated());
+        assertEquals(java.util.Set.of(1,3),fornecedores.findAll().get(0).diasEntrega);
     }
     private Long cadastrarFornecedor(String nome) throws Exception {
         var res=mvc.perform(post("/api/fornecedores").with(user("Administrador").roles("ADMIN")).with(csrf())
@@ -150,7 +172,7 @@ class ExclusaoEstoqueTest {
             .andExpect(status().isCreated()).andReturn();
         Long id=new com.fasterxml.jackson.databind.ObjectMapper().readTree(res.getResponse().getContentAsString()).get("id").asLong();
         assertEquals(2,produtos.findById(id).orElseThrow().fornecedores.size());
-        assertEquals(java.util.List.of("Ambev","Coca-Cola"),contextoIa.consultar(30).produtos().get(0).fornecedores());
+        assertEquals(java.util.List.of("Ambev","Coca-Cola"),contextoIa.consultar(30).produtos().get(0).fornecedores().stream().map(f -> f.nome).toList());
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/produtos/"+id+"/fornecedores")
             .with(user("Administrador").roles("ADMIN")).with(csrf()).contentType("application/json")
             .content("{\"fornecedorIds\":["+coca+"]}")).andExpect(status().isOk());

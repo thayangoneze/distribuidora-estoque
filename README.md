@@ -100,7 +100,7 @@ Os preços são preenchidos manualmente. O custo é o último valor cadastrado, 
 
 O novo produto aceita uma quantidade inicial não negativa. O cadastro e o registro de `SALDO_INICIAL` são salvos na mesma transação. Esse registro não é contado como recebimento ou venda nas consultas do assistente.
 
-Selecione dias da semana de entrega (1 = segunda até 7 = domingo). A ação **Entregas** permite atualizar produtos existentes. Não se convertem prazos antigos em dias da semana: os produtos anteriores ficam sem agenda até ser informada. A cobertura desejada e o prazo numérico deixaram de ser campos de uso; as colunas antigas permanecem apenas para compatibilidade do banco existente.
+Selecione dias da semana de entrega no cadastro da empresa (1 = segunda até 7 = domingo). A ação **Entregas** na seção Fornecedores permite atualizar a agenda da empresa. Não se convertem prazos antigos em dias da semana: os produtos anteriores ficam sem agenda até ser informada. A cobertura desejada e o prazo numérico deixaram de ser campos de uso; as colunas antigas permanecem apenas para compatibilidade do banco existente.
 
 A reposição considera a próxima entrega após hoje, no fuso America/Sao_Paulo, e o maior intervalo entre os dias cadastrados. Ponto = consumo médio × dias até próxima entrega + segurança; alvo = consumo médio × (dias até próxima entrega + maior intervalo entre entregas) + segurança, arredondando quantidades para cima. Não considera feriados nem horário de corte. Sem agenda, usa apenas a segurança, sem estimar um calendário; itens sem saída em 60 dias continuam bloqueados para recompra automática.
 
@@ -112,6 +112,8 @@ Cadastre os nomes manualmente na seção **Fornecedores** (ex.: Ambev, Coca-Cola
 
 Marque uma ou mais empresas no novo produto ou use **Fornecedores** na linha de um produto existente. A tabela mostra os fornecedores de cada produto; a seção de empresas mostra os produtos fornecidos por cada uma. O vínculo é muitos para muitos: cada produto pode ser entregue por várias empresas, e cada empresa pode fornecer vários produtos. Remover um vínculo não altera o saldo. Apagar produtos ou limpar o estoque preserva as empresas cadastradas.
 
-Os dias de entrega continuam configurados por produto; esta etapa não estabelece agendas diferentes por empresa. Produtos anteriores ficam sem fornecedor até serem vinculados. O assistente recebe os nomes dos fornecedores reais de cada produto e pode responder perguntas como “Quais produtos a Ambev entrega?”.
+Os dias de entrega são configurados por empresa. Cada produto usa a união dos dias dos fornecedores vinculados. Produtos anteriores ficam sem fornecedor até serem vinculados. Empresas anteriores ficam sem dias até você preencher sua agenda; dias antigos dos produtos não são copiados para empresas, pois podem ser ambíguos. O assistente recebe os nomes e dias dos fornecedores reais de cada produto e pode responder perguntas como “Quais produtos a Ambev entrega?”.
 
 API autenticada: `GET/POST /api/fornecedores` e `PUT /api/produtos/{id}/fornecedores` com `fornecedorIds`. O cadastro de produto também aceita `fornecedorIds`. As rotas de escrita exigem CSRF; IDs inexistentes são rejeitados sem gravar cadastro ou saldo parcial.
+
+A agenda da empresa é editada em `PUT /api/fornecedores/{id}/entregas`. A rota antiga de agenda por produto foi removida. Alterar os dias de uma empresa atualiza a agenda efetiva de todos os produtos vinculados sem alterar saldos.

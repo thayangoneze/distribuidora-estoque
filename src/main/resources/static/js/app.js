@@ -79,7 +79,7 @@ $('#form-fornecedores-produto').addEventListener('submit', async e => {
 $('#form-fornecedor').addEventListener('submit', async e => {
   e.preventDefault(); const form = e.currentTarget; const botao = form.querySelector('button[type="submit"]'); botao.disabled = true;
   try {
-    await requisitar('/api/fornecedores', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome: form.elements.nome.value.trim() }) });
+    await requisitar('/api/fornecedores', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome: form.elements.nome.value.trim(), diasEntrega: [...form.querySelectorAll('input[name="diasEntrega"]:checked')].map(c => Number(c.value)) }) });
     form.reset(); $('#status-fornecedor').textContent = 'Empresa cadastrada. Agora selecione-a no cadastro ou no botão Fornecedores do produto.'; $('#status-fornecedor').hidden = false;
     await atualizar();
   } catch (erro) { $('#status-fornecedor').textContent = erro.message; $('#status-fornecedor').hidden = false; }
@@ -95,10 +95,13 @@ async function atualizar() {
     const tabelaEmpresas = $('#lista-fornecedores'); tabelaEmpresas.replaceChildren();
     fornecedores.forEach(f => {
       const linha = document.createElement('tr'); celula(linha, f.nome);
+      celula(linha, (f.diasEntrega || []).sort((a,b) => a-b).map(d => ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'][d-1]).join(', ') || 'Não informado');
       celula(linha, produtos.filter(p => (p.fornecedores || []).some(v => v.id === f.id)).map(p => p.nome).join(', ') || 'Nenhum produto vinculado');
+      const acoes = document.createElement('td'); const editar = document.createElement('button'); editar.type = 'button'; editar.className = 'secundario'; editar.textContent = 'Entregas';
+      editar.setAttribute('aria-label', `Editar dias de entrega de ${f.nome}`); editar.addEventListener('click', () => abrirEntregas(f)); acoes.append(editar); linha.append(acoes);
       tabelaEmpresas.append(linha);
     });
-    if (!fornecedores.length) vazio(tabelaEmpresas, 2, 'Cadastre a primeira empresa fornecedora.');
+    if (!fornecedores.length) vazio(tabelaEmpresas, 4, 'Cadastre a primeira empresa fornecedora.');
     $('#total-produtos').textContent = produtos.length;
     $('#total-criticos').textContent = produtos.filter(p => p.saldo <= p.estoqueSeguranca).length;
     $('#total-sugestoes').textContent = sugestoes.filter(s => s.quantidadeSugerida > 0).length;
@@ -138,11 +141,9 @@ async function atualizar() {
       precos.type = 'button'; precos.className = 'secundario'; precos.textContent = 'Preços';
       precos.setAttribute('aria-label', `Editar preços de ${p.nome}`);
       precos.addEventListener('click', () => abrirPrecos(p));
-      const entregas = document.createElement('button'); entregas.type = 'button'; entregas.className = 'secundario'; entregas.textContent = 'Entregas';
-      entregas.addEventListener('click', () => abrirEntregas(p));
       const vinculos = document.createElement('button'); vinculos.type = 'button'; vinculos.className = 'secundario'; vinculos.textContent = 'Fornecedores';
       vinculos.setAttribute('aria-label', `Editar fornecedores de ${p.nome}`); vinculos.addEventListener('click', () => abrirFornecedores(p));
-      acoes.append(precos, entregas, vinculos, apagar);
+      acoes.append(precos, vinculos, apagar);
       linha.append(acoes);
       lista.append(linha);
     });
@@ -170,7 +171,6 @@ $('#form-produto').addEventListener('submit', async evento => {
   const dados = Object.fromEntries(new FormData(form));
   for (const campo of ['estoqueSeguranca', 'saldo']) dados[campo] = Number(dados[campo]);
   Object.assign(dados, dadosPrecos(form));
-  dados.diasEntrega = [...form.querySelectorAll('input[name="diasEntrega"]:checked')].map(c => Number(c.value));
   dados.fornecedorIds = fornecedoresSelecionados(form);
   delete dados.modoPreco;
   try {
@@ -249,9 +249,9 @@ for (const form of [$('#form-produto'), $('#form-precos')]) {
   for (const nome of ['modoPreco', 'precoCusto', 'percentualAcrescimo']) form.elements[nome].addEventListener('input', () => configurarModoPreco(form));
   configurarModoPreco(form);
 }
-let produtoEntregasId;
+let empresaEntregasId;
 function abrirEntregas(p) {
-  produtoEntregasId = p.id; $('#produto-entregas').textContent = p.nome;
+  empresaEntregasId = p.id; $('#produto-entregas').textContent = p.nome;
   $('#form-entregas').querySelectorAll('input[name="diasEntrega"]').forEach(c => c.checked = (p.diasEntrega || []).includes(Number(c.value)));
   $('#erro-entregas').hidden = true; $('#dialog-entregas').showModal();
 }
@@ -260,7 +260,7 @@ $('#form-entregas').addEventListener('submit', async e => {
   e.preventDefault(); const botao = e.currentTarget.querySelector('button[type="submit"]'); botao.disabled = true;
   const diasEntrega = [...e.currentTarget.querySelectorAll('input[name="diasEntrega"]:checked')].map(c => Number(c.value));
   try {
-    await requisitar(`/api/produtos/${produtoEntregasId}/entregas`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ diasEntrega }) });
+    await requisitar(`/api/fornecedores/${empresaEntregasId}/entregas`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ diasEntrega }) });
     $('#dialog-entregas').close(); avisar('Dias de entrega atualizados.'); await atualizar();
   } catch (erro) { $('#erro-entregas').textContent = erro.message; $('#erro-entregas').hidden = false; }
   finally { botao.disabled = false; }

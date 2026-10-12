@@ -32,10 +32,6 @@ public class EstoqueController {
     public Produto fornecedores(@PathVariable Long id, @Valid @RequestBody br.com.distribuidora.dto.FornecedoresProduto dados) {
         return estoque.atualizarFornecedores(id, dados.fornecedorIds());
     }
-    @PutMapping("/produtos/{id}/entregas")
-    public Produto entregas(@PathVariable Long id, @Valid @RequestBody br.com.distribuidora.dto.DiasEntrega dados) {
-        return estoque.atualizarEntregas(id, dados.diasEntrega());
-    }
     @PutMapping("/produtos/{id}/precos")
     public Produto atualizarPrecos(@PathVariable Long id, @Valid @RequestBody PrecosProduto dados) {
         return estoque.atualizarPrecos(id, dados);

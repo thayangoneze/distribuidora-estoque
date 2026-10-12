@@ -38,7 +38,6 @@ public class EstoqueService {
     @Transactional
     public Produto criar(Produto p) {
         p.id = null; p.versao = null; p.prazoEntregaDias = 0; p.coberturaDesejadaDias = 0;
-        if (p.diasEntrega == null) p.diasEntrega = new HashSet<>();
         if (p.calcularPrecoVenda) p.precoVenda = calcularVenda(p.precoCusto, p.percentualAcrescimo);
         else p.percentualAcrescimo = null;
         p.fornecedores = fornecedores.resolver(p.fornecedorIds);
@@ -51,13 +50,6 @@ public class EstoqueService {
         Produto p = produtos.buscarParaAtualizar(id).orElseThrow(() ->
             new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto não encontrado"));
         p.fornecedores = fornecedores.resolver(ids);
-        return produtos.save(p);
-    }
-    @Transactional
-    public Produto atualizarEntregas(Long id, Set<Integer> dias) {
-        Produto p = produtos.buscarParaAtualizar(id).orElseThrow(() ->
-            new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto não encontrado"));
-        p.diasEntrega = new HashSet<>(dias);
         return produtos.save(p);
     }
     // Próxima entrega após hoje; não presume que ainda é possível receber no mesmo dia.
@@ -116,7 +108,7 @@ public class EstoqueService {
             .stream().map(m -> m.produto.id).collect(Collectors.toSet());
         return produtos.findAll().stream().map(p -> {
             double media = saidas.getOrDefault(p.id, 0) / (double) dias;
-            Set<Integer> agenda = p.diasEntrega == null ? Set.of() : p.diasEntrega;
+            Set<Integer> agenda = p.getDiasEntrega();
             int espera = diasAteEntrega(agenda, agora.atZone(ZoneId.of("America/Sao_Paulo")).toLocalDate());
             int intervalo = maiorIntervaloEntrega(agenda);
             int ponto = (int) Math.ceil(media * espera) + p.estoqueSeguranca;

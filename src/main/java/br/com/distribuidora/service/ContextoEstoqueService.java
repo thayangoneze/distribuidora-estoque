@@ -18,7 +18,7 @@ public class ContextoEstoqueService {
         this.produtos = produtos; this.movimentacoes = movimentacoes; this.estoque = estoque;
     }
     public record Dia(String data, long entradas, long saidas) {}
-    public record Item(Long id, String nome, String unidadeEstoque, java.math.BigDecimal precoCusto, java.math.BigDecimal precoVenda, int saldo, int estoqueSeguranca, Set<Integer> diasEntrega, List<String> fornecedores, List<Dia> movimentacoesDiarias) {}
+    public record Item(Long id, String nome, String unidadeEstoque, java.math.BigDecimal precoCusto, java.math.BigDecimal precoVenda, int saldo, int estoqueSeguranca, Set<Integer> diasEntrega, List<br.com.distribuidora.model.Fornecedor> fornecedores, List<Dia> movimentacoesDiarias) {}
     public record Contexto(String atualizadoEm, String inicioPeriodo, int periodoDias,
                            Instant primeiraMovimentacaoRegistrada, List<Item> produtos,
                            List<br.com.distribuidora.dto.Sugestao> sugestoesBase30Dias) {}
@@ -41,7 +41,7 @@ public class ContextoEstoqueService {
         List<Item> itens = lista.stream().sorted(Comparator.comparing(p -> p.id)).map(p -> {
             var diarios = totais.getOrDefault(p.id, Map.of()).entrySet().stream()
                 .map(e -> new Dia(e.getKey().toString(), e.getValue()[0], e.getValue()[1])).toList();
-            return new Item(p.id, p.nome, p.unidadeEstoque == null ? "UN" : p.unidadeEstoque, p.precoCusto, p.precoVenda, p.saldo, p.estoqueSeguranca, p.diasEntrega, p.fornecedores.stream().map(f -> f.nome).sorted().toList(), diarios);
+            return new Item(p.id, p.nome, p.unidadeEstoque == null ? "UN" : p.unidadeEstoque, p.precoCusto, p.precoVenda, p.saldo, p.estoqueSeguranca, p.getDiasEntrega(), p.fornecedores.stream().sorted(Comparator.comparing(f -> f.nome)).toList(), diarios);
         }).toList();
         return new Contexto(agora.toString(), primeiroDia.toString(), dias,
             movimentacoes.primeiraMovimentacao(), itens, estoque.sugestoes(30));

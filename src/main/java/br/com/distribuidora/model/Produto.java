@@ -16,8 +16,12 @@ public class Produto {
     @Min(0) @Column(nullable = false) public int estoqueSeguranca;
     @JsonIgnore @Column(nullable = false) public int prazoEntregaDias;
     @JsonIgnore @Column(nullable = false) public int coberturaDesejadaDias;
-    @ElementCollection(fetch = FetchType.EAGER)
-    public Set<@NotNull @Min(1) @Max(7) Integer> diasEntrega = new HashSet<>();
+    @com.fasterxml.jackson.annotation.JsonProperty(access=com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY)
+    public Set<Integer> getDiasEntrega() {
+        Set<Integer> dias = new java.util.TreeSet<>();
+        for (Fornecedor f : fornecedores) dias.addAll(f.diasEntrega);
+        return dias;
+    }
     @DecimalMin("0") @DecimalMax("100000") @Digits(integer=6,fraction=2)
     public BigDecimal percentualAcrescimo;
     @Transient public boolean calcularPrecoVenda;
