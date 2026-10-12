@@ -25,10 +25,13 @@ public class EstoqueController {
     public EstoqueController(ProdutoRepository produtos, EstoqueService estoque) { this.produtos = produtos; this.estoque = estoque; }
     @PostMapping("/produtos") @ResponseStatus(HttpStatus.CREATED)
     public Produto criar(@Valid @RequestBody Produto produto) {
-        produto.id = null; produto.versao = null; produto.saldo = 0;
-        return produtos.save(produto);
+        return estoque.criar(produto);
     }
     @GetMapping("/produtos") public List<Produto> listar() { return produtos.findAll(); }
+    @PutMapping("/produtos/{id}/entregas")
+    public Produto entregas(@PathVariable Long id, @Valid @RequestBody br.com.distribuidora.dto.DiasEntrega dados) {
+        return estoque.atualizarEntregas(id, dados.diasEntrega());
+    }
     @PutMapping("/produtos/{id}/precos")
     public Produto atualizarPrecos(@PathVariable Long id, @Valid @RequestBody PrecosProduto dados) {
         return estoque.atualizarPrecos(id, dados);

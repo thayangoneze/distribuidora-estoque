@@ -72,6 +72,7 @@ async function atualizar() {
       celula(linha, moeda(p.precoCusto));
       celula(linha, moeda(p.precoVenda));
       celula(linha, p.estoqueSeguranca);
+      celula(linha, (p.diasEntrega || []).sort((a,b) => a-b).map(d => ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'][d-1]).join(', ') || 'Não informado');
       selo(linha, critico ? 'Estoque crítico' : 'Normal', critico ? 'alerta' : '');
       const acoes = document.createElement('td');
       const apagar = document.createElement('button');
@@ -92,13 +93,15 @@ async function atualizar() {
       precos.type = 'button'; precos.className = 'secundario'; precos.textContent = 'Preços';
       precos.setAttribute('aria-label', `Editar preços de ${p.nome}`);
       precos.addEventListener('click', () => abrirPrecos(p));
-      acoes.append(precos, apagar);
+      const entregas = document.createElement('button'); entregas.type = 'button'; entregas.className = 'secundario'; entregas.textContent = 'Entregas';
+      entregas.addEventListener('click', () => abrirEntregas(p));
+      acoes.append(precos, entregas, apagar);
       linha.append(acoes);
       lista.append(linha);
     });
     seletor.value = selecionado;
     $('#limpar-estoque').disabled = !produtos.length;
-    if (!produtos.length) vazio(lista, 7, 'Nenhum produto cadastrado.');
+    if (!produtos.length) vazio(lista, 8, 'Nenhum produto cadastrado.');
     const reposicao = $('#lista-reposicao');
     reposicao.replaceChildren();
     sugestoes.forEach(s => {
@@ -118,11 +121,13 @@ $('#form-produto').addEventListener('submit', async evento => {
   evento.preventDefault();
   const form = evento.currentTarget;
   const dados = Object.fromEntries(new FormData(form));
-  for (const campo of ['estoqueSeguranca', 'prazoEntregaDias', 'coberturaDesejadaDias']) dados[campo] = Number(dados[campo]);
-  for (const campo of ['precoCusto', 'precoVenda']) dados[campo] = dados[campo] === '' ? null : Number(dados[campo]);
+  for (const campo of ['estoqueSeguranca', 'saldo']) dados[campo] = Number(dados[campo]);
+  Object.assign(dados, dadosPrecos(form));
+  dados.diasEntrega = [...form.querySelectorAll('input[name="diasEntrega"]:checked')].map(c => Number(c.value));
+  delete dados.modoPreco;
   try {
     await requisitar('/api/produtos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
-    form.reset();
+    form.reset(); configurarModoPreco(form);
     avisar('Produto cadastrado.');
     await atualizar();
   } catch (erro) { avisar(erro.message, true); }
@@ -172,6 +177,46 @@ $('#form-limpeza').addEventListener('submit', async evento => {
     $('#erro-limpeza').hidden = false;
   } finally { botao.disabled = false; }
 });
+function configurarModoPreco(form) {
+  const automatico = form.elements.modoPreco.value === 'percentual';
+  form.querySelector('.campo-percentual').hidden = !automatico;
+  form.querySelector('.ajuda-percentual').hidden = !automatico;
+  form.elements.percentualAcrescimo.required = automatico;
+  form.elements.precoCusto.required = automatico;
+  form.elements.precoVenda.readOnly = automatico;
+  if (automatico) {
+    const custo = form.elements.precoCusto.value;
+    const percentual = form.elements.percentualAcrescimo.value;
+    form.elements.precoVenda.value = custo !== '' && percentual !== ''
+      ? (Math.floor(Number(custo) * (1 + Number(percentual) / 100) * 2 + 0.5 + 1e-9) / 2).toFixed(2) : '';
+  }
+}
+function dadosPrecos(form) {
+  const numero = nome => form.elements[nome].value === '' ? null : Number(form.elements[nome].value);
+  return { precoCusto: numero('precoCusto'), precoVenda: numero('precoVenda'),
+    percentualAcrescimo: form.elements.modoPreco.value === 'percentual' ? numero('percentualAcrescimo') : null,
+    calcularPrecoVenda: form.elements.modoPreco.value === 'percentual' };
+}
+for (const form of [$('#form-produto'), $('#form-precos')]) {
+  for (const nome of ['modoPreco', 'precoCusto', 'percentualAcrescimo']) form.elements[nome].addEventListener('input', () => configurarModoPreco(form));
+  configurarModoPreco(form);
+}
+let produtoEntregasId;
+function abrirEntregas(p) {
+  produtoEntregasId = p.id; $('#produto-entregas').textContent = p.nome;
+  $('#form-entregas').querySelectorAll('input[name="diasEntrega"]').forEach(c => c.checked = (p.diasEntrega || []).includes(Number(c.value)));
+  $('#erro-entregas').hidden = true; $('#dialog-entregas').showModal();
+}
+$('#cancelar-entregas').addEventListener('click', () => $('#dialog-entregas').close());
+$('#form-entregas').addEventListener('submit', async e => {
+  e.preventDefault(); const botao = e.currentTarget.querySelector('button[type="submit"]'); botao.disabled = true;
+  const diasEntrega = [...e.currentTarget.querySelectorAll('input[name="diasEntrega"]:checked')].map(c => Number(c.value));
+  try {
+    await requisitar(`/api/produtos/${produtoEntregasId}/entregas`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ diasEntrega }) });
+    $('#dialog-entregas').close(); avisar('Dias de entrega atualizados.'); await atualizar();
+  } catch (erro) { $('#erro-entregas').textContent = erro.message; $('#erro-entregas').hidden = false; }
+  finally { botao.disabled = false; }
+});
 const dialogPrecos = $('#dialog-precos');
 let produtoPrecosId;
 function abrirPrecos(produto) {
@@ -180,6 +225,9 @@ function abrirPrecos(produto) {
   const form = $('#form-precos');
   form.elements.precoCusto.value = produto.precoCusto ?? '';
   form.elements.precoVenda.value = produto.precoVenda ?? '';
+  form.elements.percentualAcrescimo.value = produto.percentualAcrescimo ?? '';
+  form.elements.modoPreco.value = produto.percentualAcrescimo == null ? 'manual' : 'percentual';
+  configurarModoPreco(form);
   $('#erro-precos').hidden = true;
   dialogPrecos.showModal(); form.elements.precoCusto.focus();
 }
@@ -188,8 +236,7 @@ $('#form-precos').addEventListener('submit', async evento => {
   evento.preventDefault();
   const form = evento.currentTarget;
   const botao = form.querySelector('button[type="submit"]'); botao.disabled = true;
-  const dados = {};
-  for (const campo of ['precoCusto', 'precoVenda']) dados[campo] = form.elements[campo].value === '' ? null : Number(form.elements[campo].value);
+  const dados = dadosPrecos(form);
   try {
     await requisitar(`/api/produtos/${produtoPrecosId}/precos`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
     dialogPrecos.close(); avisar('Preços atualizados.'); await atualizar();

@@ -18,8 +18,7 @@ public class ContextoEstoqueService {
         this.produtos = produtos; this.movimentacoes = movimentacoes; this.estoque = estoque;
     }
     public record Dia(String data, long entradas, long saidas) {}
-    public record Item(Long id, String nome, String unidadeEstoque, java.math.BigDecimal precoCusto, java.math.BigDecimal precoVenda, int saldo, int estoqueSeguranca, int prazoEntregaDias,
-                       int coberturaDesejadaDias, List<Dia> movimentacoesDiarias) {}
+    public record Item(Long id, String nome, String unidadeEstoque, java.math.BigDecimal precoCusto, java.math.BigDecimal precoVenda, int saldo, int estoqueSeguranca, Set<Integer> diasEntrega, List<Dia> movimentacoesDiarias) {}
     public record Contexto(String atualizadoEm, String inicioPeriodo, int periodoDias,
                            Instant primeiraMovimentacaoRegistrada, List<Item> produtos,
                            List<br.com.distribuidora.dto.Sugestao> sugestoesBase30Dias) {}
@@ -34,6 +33,7 @@ public class ContextoEstoqueService {
             "O catálogo excede o limite desta versão do assistente (500 produtos).");
         Map<Long, Map<LocalDate, long[]>> totais = new HashMap<>();
         for (Movimentacao m : movimentacoes.findByCriadaEmBetweenOrderByCriadaEmAsc(inicio, agora)) {
+            if (m.tipo == Movimentacao.Tipo.SALDO_INICIAL) continue;
             LocalDate dia = m.criadaEm.atZone(zona).toLocalDate();
             long[] t = totais.computeIfAbsent(m.produto.id, id -> new TreeMap<>()).computeIfAbsent(dia, d -> new long[2]);
             t[m.tipo == Movimentacao.Tipo.ENTRADA ? 0 : 1] += m.quantidade;
@@ -41,7 +41,7 @@ public class ContextoEstoqueService {
         List<Item> itens = lista.stream().sorted(Comparator.comparing(p -> p.id)).map(p -> {
             var diarios = totais.getOrDefault(p.id, Map.of()).entrySet().stream()
                 .map(e -> new Dia(e.getKey().toString(), e.getValue()[0], e.getValue()[1])).toList();
-            return new Item(p.id, p.nome, p.unidadeEstoque == null ? "UN" : p.unidadeEstoque, p.precoCusto, p.precoVenda, p.saldo, p.estoqueSeguranca, p.prazoEntregaDias, p.coberturaDesejadaDias, diarios);
+            return new Item(p.id, p.nome, p.unidadeEstoque == null ? "UN" : p.unidadeEstoque, p.precoCusto, p.precoVenda, p.saldo, p.estoqueSeguranca, p.diasEntrega, diarios);
         }).toList();
         return new Contexto(agora.toString(), primeiroDia.toString(), dias,
             movimentacoes.primeiraMovimentacao(), itens, estoque.sugestoes(30));

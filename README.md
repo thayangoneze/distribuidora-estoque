@@ -11,7 +11,7 @@ Primeira etapa do sistema da Distribuidora de Bebidas do Gaúcho. Painel web e A
 Exemplo de uso:
 
 ```bash
-curl -X POST http://localhost:8080/api/produtos -H 'Content-Type: application/json' -d '{"nome":"Refrigerante 2 L","estoqueSeguranca":10,"prazoEntregaDias":3,"coberturaDesejadaDias":7}'
+curl -X POST http://localhost:8080/api/produtos -H 'Content-Type: application/json' -d '{"nome":"Refrigerante 2 L","saldo":24,"estoqueSeguranca":10,"diasEntrega":[2,5]}'
 curl -X POST http://localhost:8080/api/produtos/1/movimentacoes -H 'Content-Type: application/json' -d '{"tipo":"ENTRADA","quantidade":40}'
 curl -X POST http://localhost:8080/api/produtos/1/movimentacoes -H 'Content-Type: application/json' -d '{"tipo":"SAIDA","quantidade":8}'
 curl http://localhost:8080/api/produtos
@@ -95,3 +95,13 @@ Testes com H2 validam consulta ao contexto e acesso autenticado; testes HTTP sim
 O cadastro e a tabela de estoque mostram custo e venda em reais por unidade de estoque (UN, CX ou PCT). Use **Preços** na linha do produto para editar os valores sem alterar saldo ou movimentações. Campos em branco significam “Não informado”; zero é um valor informado. Produtos anteriores continuam com os preços em branco até serem preenchidos.
 
 Os preços são preenchidos manualmente. O custo é o último valor cadastrado, não uma média ponderada. A diferença entre preços não representa lucro líquido. O assistente Gemini permanece disponível para consultas em texto sobre o estoque.
+
+## Saldo inicial, entregas e cálculo de venda
+
+O novo produto aceita uma quantidade inicial não negativa. O cadastro e o registro de `SALDO_INICIAL` são salvos na mesma transação. Esse registro não é contado como recebimento ou venda nas consultas do assistente.
+
+Selecione dias da semana de entrega (1 = segunda até 7 = domingo). A ação **Entregas** permite atualizar produtos existentes. Não se convertem prazos antigos em dias da semana: os produtos anteriores ficam sem agenda até ser informada. A cobertura desejada e o prazo numérico deixaram de ser campos de uso; as colunas antigas permanecem apenas para compatibilidade do banco existente.
+
+A reposição considera a próxima entrega após hoje, no fuso America/Sao_Paulo, e o maior intervalo entre os dias cadastrados. Ponto = consumo médio × dias até próxima entrega + segurança; alvo = consumo médio × (dias até próxima entrega + maior intervalo entre entregas) + segurança, arredondando quantidades para cima. Não considera feriados nem horário de corte. Sem agenda, usa apenas a segurança, sem estimar um calendário; itens sem saída em 60 dias continuam bloqueados para recompra automática.
+
+No cadastro e na edição de preços, escolha **Digitar meu preço** ou **Calcular por porcentagem**. O acréscimo é sobre o custo, não margem sobre a venda. Fórmula: custo × (1 + percentual / 100), arredondado ao múltiplo de R$ 0,50 mais próximo; empate arredonda para cima. Ex.: R$ 10 + 32,5% resulta em R$ 13,50. O servidor calcula com BigDecimal; o preço manual não é arredondado. Voltar ao modo manual permite qualquer preço com até duas casas decimais.

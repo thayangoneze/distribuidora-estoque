@@ -41,16 +41,19 @@
         <form id="form-produto">
           <label>Nome do produto<input name="nome" required maxlength="255" placeholder="Ex.: Refrigerante 2 L"></label>
           <label>Unidade do estoque<select name="unidadeEstoque"><option value="UN">Unidade (UN)</option><option value="CX">Caixa (CX)</option><option value="PCT">Pacote (PCT)</option></select></label>
+          <label>Quantidade inicial<input name="saldo" type="number" min="0" max="2147483647" step="1" required value="0"></label>
           <div class="campos">
             <label>Preço de custo (R$)<input name="precoCusto" type="number" min="0" max="999999999999.99" step="0.01" placeholder="Não informado"></label>
-            <label>Preço de venda (R$)<input name="precoVenda" type="number" min="0" max="999999999999.99" step="0.01" placeholder="Não informado"></label>
+            <label>Como definir a venda<select name="modoPreco"><option value="manual">Digitar meu preço</option><option value="percentual">Calcular por porcentagem</option></select></label>
+<label class="campo-percentual" hidden>Acréscimo sobre o custo (%)<input name="percentualAcrescimo" type="number" min="0" max="100000" step="0.01" placeholder="Ex.: 30"></label>
+<p class="ajuda ajuda-percentual" hidden>Custo × (1 + porcentagem ÷ 100), arredondado ao R$ 0,50 mais próximo. Ex.: R$ 10 + 30% = R$ 13. Você pode voltar ao preço manual.</p>
+<label>Preço de venda (R$)<input name="precoVenda" type="number" min="0" max="999999999999.99" step="0.01" placeholder="Não informado"></label>
           </div>
           <p class="ajuda">Informe os preços por unidade de estoque: unidade, caixa ou pacote.</p>
           <div class="campos">
             <label>Estoque de segurança <span class="dica">Quantidade mínima de proteção</span><input name="estoqueSeguranca" type="number" min="0" required value="10"></label>
-            <label>Prazo de entrega <span class="dica">Tempo do fornecedor, em dias</span><input name="prazoEntregaDias" type="number" min="0" required value="3"></label>
-            <label>Cobertura desejada <span class="dica">Dias adicionais para abastecer</span><input name="coberturaDesejadaDias" type="number" min="0" required value="7"></label>
           </div>
+<fieldset class="dias-entrega"><legend>Dias de entrega</legend><label><input type="checkbox" name="diasEntrega" value="1">Segunda</label><label><input type="checkbox" name="diasEntrega" value="2">Terça</label><label><input type="checkbox" name="diasEntrega" value="3">Quarta</label><label><input type="checkbox" name="diasEntrega" value="4">Quinta</label><label><input type="checkbox" name="diasEntrega" value="5">Sexta</label><label><input type="checkbox" name="diasEntrega" value="6">Sábado</label><label><input type="checkbox" name="diasEntrega" value="7">Domingo</label></fieldset><p class="ajuda">Marque os dias em que o fornecedor entrega. Sem seleção, não há previsão de entrega.</p>
           <button type="submit">Cadastrar produto</button>
         </form>
       </section>
@@ -68,7 +71,7 @@
     </div>
     <section class="painel tabela-painel" id="estoque">
       <div class="titulo-linha"><div><span class="sobretitulo escuro">CATÁLOGO</span><h2>Produtos em estoque</h2></div><div class="acoes"><button type="button" class="secundario" id="atualizar">Atualizar</button><button type="button" class="perigo" id="limpar-estoque" disabled>Limpar todo o estoque</button></div></div>
-      <div class="rolagem"><table><thead><tr><th>Produto</th><th>Saldo</th><th>Custo (R$)</th><th>Venda (R$)</th><th>Estoque de segurança</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="lista-produtos"></tbody></table></div>
+      <div class="rolagem"><table><thead><tr><th>Produto</th><th>Saldo</th><th>Custo (R$)</th><th>Venda (R$)</th><th>Estoque de segurança</th><th>Entregas</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="lista-produtos"></tbody></table></div>
     </section>
     <section class="painel tabela-painel" id="reposicao">
       <div class="titulo-linha"><div><span class="sobretitulo escuro">PLANEJAMENTO</span><h2>Sugestão de reposição</h2></div><label class="periodo">Analisar últimos <select id="periodo"><option value="30">30 dias</option><option value="60">60 dias</option><option value="90">90 dias</option></select></label></div>
@@ -106,11 +109,15 @@
       <h2 id="titulo-precos">Editar preços</h2>
       <p id="produto-precos"></p>
       <label>Preço de custo (R$)<input name="precoCusto" type="number" min="0" max="999999999999.99" step="0.01" placeholder="Não informado"></label>
-      <label>Preço de venda (R$)<input name="precoVenda" type="number" min="0" max="999999999999.99" step="0.01" placeholder="Não informado"></label>
+      <label>Como definir a venda<select name="modoPreco"><option value="manual">Digitar meu preço</option><option value="percentual">Calcular por porcentagem</option></select></label>
+<label class="campo-percentual" hidden>Acréscimo sobre o custo (%)<input name="percentualAcrescimo" type="number" min="0" max="100000" step="0.01" placeholder="Ex.: 30"></label>
+<p class="ajuda ajuda-percentual" hidden>Custo × (1 + porcentagem ÷ 100), arredondado ao R$ 0,50 mais próximo. Ex.: R$ 10 + 30% = R$ 13. Você pode voltar ao preço manual.</p>
+<label>Preço de venda (R$)<input name="precoVenda" type="number" min="0" max="999999999999.99" step="0.01" placeholder="Não informado"></label>
       <p class="ajuda">Deixe em branco para marcar como não informado. Alterar preços não altera o saldo.</p>
       <p id="erro-precos" class="critico" role="alert" hidden></p>
       <div class="acoes"><button type="button" class="secundario" id="cancelar-precos">Cancelar</button><button type="submit">Salvar preços</button></div>
     </form>
   </dialog>
+<dialog id="dialog-entregas" aria-labelledby="titulo-entregas"><form id="form-entregas"><h2 id="titulo-entregas">Dias de entrega</h2><p id="produto-entregas"></p><fieldset class="dias-entrega"><legend>Dias de entrega</legend><label><input type="checkbox" name="diasEntrega" value="1">Segunda</label><label><input type="checkbox" name="diasEntrega" value="2">Terça</label><label><input type="checkbox" name="diasEntrega" value="3">Quarta</label><label><input type="checkbox" name="diasEntrega" value="4">Quinta</label><label><input type="checkbox" name="diasEntrega" value="5">Sexta</label><label><input type="checkbox" name="diasEntrega" value="6">Sábado</label><label><input type="checkbox" name="diasEntrega" value="7">Domingo</label></fieldset><p class="ajuda">Marque os dias em que o fornecedor entrega. Sem seleção, não há previsão de entrega.</p><p id="erro-entregas" class="critico" role="alert" hidden></p><div class="acoes"><button type="button" class="secundario" id="cancelar-entregas">Cancelar</button><button type="submit">Salvar entregas</button></div></form></dialog>
 </body>
 </html>

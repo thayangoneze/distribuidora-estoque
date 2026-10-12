@@ -73,6 +73,69 @@ class ExclusaoEstoqueTest {
         assertNull(produtos.findById(p.id).orElseThrow().precoCusto);
     }
 
+    @Test void cadastroRegistraSaldoInicialAgendaEPrecoCalculado() throws Exception {
+        var resposta=mvc.perform(post("/api/produtos").with(user("Administrador").roles("ADMIN")).with(csrf())
+            .contentType("application/json").content("{\"nome\":\"Inicial\",\"saldo\":24,\"diasEntrega\":[2,5],\"precoCusto\":10,\"percentualAcrescimo\":32.5,\"calcularPrecoVenda\":true}"))
+            .andExpect(status().isCreated()).andReturn();
+        Long id=new com.fasterxml.jackson.databind.ObjectMapper().readTree(resposta.getResponse().getContentAsString()).get("id").asLong();
+        var p=produtos.findById(id).orElseThrow(); assertEquals(24,p.saldo);
+        assertEquals(java.util.Set.of(2,5),p.diasEntrega);
+        assertEquals(0,new java.math.BigDecimal("13.50").compareTo(p.precoVenda));
+        assertEquals(Movimentacao.Tipo.SALDO_INICIAL,movimentacoes.findAll().get(0).tipo);
+        assertEquals(24,movimentacoes.findAll().get(0).quantidade);
+        assertTrue(contextoIa.consultar(30).produtos().get(0).movimentacoesDiarias().isEmpty());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/produtos/"+id+"/entregas")
+            .with(user("Administrador").roles("ADMIN")).with(csrf()).contentType("application/json")
+            .content("{\"diasEntrega\":[1,4]}")).andExpect(status().isOk());
+        assertEquals(java.util.Set.of(1,4),produtos.findById(id).orElseThrow().diasEntrega);
+        assertEquals(24,produtos.findById(id).orElseThrow().saldo);
+    }
+    @Test void cadastroRejeitaSaldoAgendaEPercentualInvalidos() throws Exception {
+        for(String extras:java.util.List.of("\"saldo\":-1","\"diasEntrega\":[8]","\"diasEntrega\":[null]",
+            "\"percentualAcrescimo\":-5","\"calcularPrecoVenda\":true,\"precoCusto\":10")) {
+            mvc.perform(post("/api/produtos").with(user("Administrador").roles("ADMIN")).with(csrf())
+                .contentType("application/json").content("{\"nome\":\"Inválido\","+extras+"}"))
+                .andExpect(status().isBadRequest());
+        }
+        assertEquals(0,produtos.count()); assertEquals(0,movimentacoes.count());
+    }
+    @Test void calculoArredondaMeioRealEPermiteVoltarAoManual() throws Exception {
+        assertEquals(new java.math.BigDecimal("13.00"),EstoqueService.calcularVenda(new java.math.BigDecimal("10"),new java.math.BigDecimal("32.49")));
+        assertEquals(new java.math.BigDecimal("13.50"),EstoqueService.calcularVenda(new java.math.BigDecimal("10"),new java.math.BigDecimal("32.50")));
+        Produto p=criar("Preço automático");
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/produtos/"+p.id+"/precos")
+            .with(user("Administrador").roles("ADMIN")).with(csrf()).contentType("application/json")
+            .content("{\"precoCusto\":10,\"percentualAcrescimo\":38,\"calcularPrecoVenda\":true}"))
+            .andExpect(status().isOk());
+        assertEquals(0,new java.math.BigDecimal("14.00").compareTo(produtos.findById(p.id).orElseThrow().precoVenda));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/produtos/"+p.id+"/precos")
+            .with(user("Administrador").roles("ADMIN")).with(csrf()).contentType("application/json")
+            .content("{\"precoCusto\":10,\"precoVenda\":13.99,\"calcularPrecoVenda\":false}"))
+            .andExpect(status().isOk());
+        assertEquals(0,new java.math.BigDecimal("13.99").compareTo(produtos.findById(p.id).orElseThrow().precoVenda));
+        assertNull(produtos.findById(p.id).orElseThrow().percentualAcrescimo);
+        assertEquals(32,produtos.findById(p.id).orElseThrow().saldo);
+    }
+    @Test void agendaConsideraProximaEntregaEIntervaloSemCoberturaManual() {
+        var segunda=java.time.LocalDate.of(2026,10,12);
+        assertEquals(3,EstoqueService.diasAteEntrega(java.util.Set.of(1,4),segunda));
+        assertEquals(4,EstoqueService.maiorIntervaloEntrega(java.util.Set.of(1,4)));
+        assertEquals(7,EstoqueService.diasAteEntrega(java.util.Set.of(1),segunda));
+        assertEquals(1,EstoqueService.maiorIntervaloEntrega(java.util.Set.of(1,2,3,4,5,6,7)));
+        assertEquals(0,EstoqueService.diasAteEntrega(java.util.Set.of(),segunda));
+        Produto p=criar("Agenda"); p.diasEntrega=new java.util.HashSet<>(java.util.Set.of(1,4)); p.estoqueSeguranca=5;
+        p.saldo=0; produtos.saveAndFlush(p);
+        int espera=EstoqueService.diasAteEntrega(p.diasEntrega,java.time.LocalDate.now(java.time.ZoneId.of("America/Sao_Paulo")));
+        var sugestao=estoque.sugestoes(30).get(0);
+        assertEquals((int)Math.ceil((8.0/30)*espera)+5,sugestao.pontoReposicao());
+        assertEquals((int)Math.ceil((8.0/30)*(espera+4))+5,sugestao.quantidadeSugerida());
+    }
+
+    @Test void limparProdutosComDiasDeEntregaRemoveAgendaSemErro() {
+        Produto p=criar("Com agenda"); p.diasEntrega=new java.util.HashSet<>(java.util.Set.of(2,5)); produtos.saveAndFlush(p);
+        estoque.limparEstoque(); produtos.flush();
+        assertEquals(0,produtos.count()); assertEquals(0,movimentacoes.count());
+    }
     @Test void apagarUmProdutoRemoveSeuHistoricoEPreservaOutro() throws Exception {
         Produto primeiro = criar("Primeiro");
         Produto outro = criar("Outro");

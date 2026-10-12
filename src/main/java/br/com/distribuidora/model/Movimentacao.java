@@ -10,7 +10,7 @@ public class Movimentacao {
     @Enumerated(EnumType.STRING) @Column(nullable = false) public Tipo tipo;
     @Column(nullable = false) public int quantidade;
     @Column(nullable = false) public Instant criadaEm;
-    public enum Tipo { ENTRADA, SAIDA }
+    public enum Tipo { ENTRADA, SAIDA, SALDO_INICIAL }
     protected Movimentacao() {}
     public Movimentacao(Produto produto, Tipo tipo, int quantidade) {
         this.produto = produto; this.tipo = tipo; this.quantidade = quantidade; this.criadaEm = Instant.now();
