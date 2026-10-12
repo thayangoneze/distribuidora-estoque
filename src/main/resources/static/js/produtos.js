@@ -35,6 +35,7 @@ async function atualizar() {
       const linha = document.createElement('tr');
       const critico = p.saldo <= p.estoqueSeguranca;
       celula(linha, p.nome);
+      celula(linha, p.codigoBarras || "Não informado");
       celula(linha, `${p.saldo} ${p.unidadeEstoque || 'UN'}`, critico ? 'critico' : '');
       celula(linha, moeda(p.precoCusto));
       celula(linha, moeda(p.precoVenda));
@@ -63,12 +64,14 @@ async function atualizar() {
       precos.addEventListener('click', () => abrirPrecos(p));
       const vinculos = document.createElement('button'); vinculos.type = 'button'; vinculos.className = 'secundario'; vinculos.textContent = 'Fornecedores';
       vinculos.setAttribute('aria-label', `Editar fornecedores de ${p.nome}`); vinculos.addEventListener('click', () => abrirFornecedores(p));
-      acoes.append(precos, vinculos, apagar);
+      const codigo = document.createElement('button'); codigo.type = 'button'; codigo.className = 'secundario'; codigo.textContent = 'Código';
+      codigo.addEventListener('click', () => { produtoCodigoId = p.id; $('#produto-codigo').textContent = p.nome; $('#codigo-produto').value = p.codigoBarras || ''; $('#erro-codigo').hidden = true; $('#dialog-codigo').showModal(); $('#codigo-produto').focus(); });
+      acoes.append(precos, vinculos, codigo, apagar);
       linha.append(acoes);
       lista.append(linha);
     });
     $('#limpar-estoque').disabled = !produtos.length;
-    if (!produtos.length) vazio(lista, 9, 'Nenhum produto cadastrado.');
+    if (!produtos.length) vazio(lista, 10, 'Nenhum produto cadastrado.');
   } catch (erro) { avisar(erro.message, true); }
 }
 $('#form-produto').addEventListener('submit', async evento => {
@@ -166,3 +169,12 @@ $('#form-precos').addEventListener('submit', async evento => {
   finally { botao.disabled = false; }
 });
 atualizar();
+
+let produtoCodigoId;
+$('#cancelar-codigo').addEventListener('click', () => $('#dialog-codigo').close());
+$('#form-codigo').addEventListener('submit', async e => {
+  e.preventDefault(); const botao=e.currentTarget.querySelector('button[type="submit"]'); botao.disabled=true;
+  try { await requisitar(`/api/produtos/${produtoCodigoId}/codigo-barras`, {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({codigoBarras:$('#codigo-produto').value.trim() || null})}); $('#dialog-codigo').close(); avisar('Código atualizado.'); await atualizar(); }
+  catch(erro) {$('#erro-codigo').textContent=erro.message;$('#erro-codigo').hidden=false;}
+  finally {botao.disabled=false;}
+});

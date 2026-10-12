@@ -25,7 +25,8 @@ async function requisitar(url, options) {
   if (!resposta.ok) {
     let detalhe = '';
     try { detalhe = (await resposta.json()).detail || ''; } catch (_) { /* resposta sem JSON */ }
-    throw new Error(detalhe || `Falha na operação (HTTP ${resposta.status}).`);
+    const erro = new Error(detalhe || `Falha na operação (HTTP ${resposta.status}).`);
+    erro.status = resposta.status; throw erro;
   }
   return resposta.status === 204 ? null : resposta.json();
 }

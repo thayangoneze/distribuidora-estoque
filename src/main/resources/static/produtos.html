@@ -13,12 +13,7 @@
   <aside class="lateral" aria-label="Navegação principal">
     <a class="identidade" href="/index.html"><span class="simbolo" aria-hidden="true">G.</span><span>Gaúcho<span class="marca-detalhe">GESTÃO DE ESTOQUE</span></span></a>
     <span class="rotulo-menu">ESPAÇO DE TRABALHO</span>
-    <nav><a href="/index.html" class="nav-link"><span aria-hidden="true">▦</span>Início</a>
-<a href="/produtos.html" class="nav-link ativo" aria-current="page"><span aria-hidden="true">▤</span>Produtos</a>
-<a href="/movimentacoes.html" class="nav-link"><span aria-hidden="true">↔</span>Movimentações</a>
-<a href="/fornecedores.html" class="nav-link"><span aria-hidden="true">◇</span>Fornecedores</a>
-<a href="/reposicao.html" class="nav-link"><span aria-hidden="true">↗</span>Reposição</a>
-<a href="/assistente.html" class="nav-link"><span aria-hidden="true">✦</span>Assistente</a></nav>
+    <nav><a href="/index.html" class="nav-link"><span aria-hidden="true">▦</span>Caixa</a><a href="/visao-geral.html" class="nav-link"><span aria-hidden="true">◉</span>Visão geral</a><a href="/produtos.html" class="nav-link ativo" aria-current="page"><span aria-hidden="true">▤</span>Produtos</a><a href="/movimentacoes.html" class="nav-link"><span aria-hidden="true">↔</span>Estoque</a><a href="/fornecedores.html" class="nav-link"><span aria-hidden="true">◇</span>Fornecedores</a><a href="/reposicao.html" class="nav-link"><span aria-hidden="true">↗</span>Reposição</a><a href="/assistente.html" class="nav-link"><span aria-hidden="true">✦</span>Assistente</a></nav>
     <div class="rodape-lateral"><span class="avatar" aria-hidden="true">A</span><div>Administrador<small>Painel de gestão</small></div><button type="button" id="sair">Sair</button></div>
   </aside>
   <div class="area-principal" id="conteudo">
@@ -27,7 +22,7 @@
         <div class="cabecalho-painel"><span class="numero">01</span><div><h2>Novo produto</h2><p>Cadastre um item e defina os parâmetros de reposição.</p></div></div>
         <form id="form-produto">
           <label>Nome do produto<input name="nome" required maxlength="255" placeholder="Ex.: Refrigerante 2 L"></label>
-          <label>Unidade do estoque<select name="unidadeEstoque"><option value="UN">Unidade (UN)</option><option value="CX">Caixa (CX)</option><option value="PCT">Pacote (PCT)</option></select></label>
+          <label>Código de barras<input name="codigoBarras" inputmode="numeric" pattern="[0-9]{8,14}" maxlength="14" placeholder="Opcional — leia com o scanner"></label><label>Unidade do estoque<select name="unidadeEstoque"><option value="UN">Unidade (UN)</option><option value="CX">Caixa (CX)</option><option value="PCT">Pacote (PCT)</option></select></label>
           <label>Quantidade inicial<input name="saldo" type="number" min="0" max="2147483647" step="1" required value="0"></label>
           <div class="campos">
             <label>Preço de custo (R$)<input name="precoCusto" type="number" min="0" max="999999999999.99" step="0.01" placeholder="Não informado"></label>
@@ -46,7 +41,7 @@
         </form>
       </section><section class="painel tabela-painel" id="estoque">
       <div class="titulo-linha"><div><span class="sobretitulo escuro">CATÁLOGO</span><h2>Produtos em estoque</h2></div><div class="acoes"><button type="button" class="secundario" id="atualizar">Atualizar</button><button type="button" class="perigo" id="limpar-estoque" disabled>Limpar todo o estoque</button></div></div>
-      <div class="rolagem"><table><thead><tr><th>Produto</th><th>Saldo</th><th>Custo (R$)</th><th>Venda (R$)</th><th>Estoque de segurança</th><th>Entregas</th><th>Fornecedores</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="lista-produtos"></tbody></table></div>
+      <div class="rolagem"><table><thead><tr><th>Produto</th><th>Código de barras</th><th>Saldo</th><th>Custo (R$)</th><th>Venda (R$)</th><th>Estoque de segurança</th><th>Entregas</th><th>Fornecedores</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="lista-produtos"></tbody></table></div>
     </section><footer class="rodape-pagina">Distribuidora do Gaúcho <span>Controle de estoque e reposição</span></footer></main></div><dialog id="dialog-limpeza" aria-labelledby="titulo-limpeza">
     <form id="form-limpeza">
       <h2 id="titulo-limpeza">Limpar todo o estoque</h2>
@@ -68,4 +63,4 @@
       <p id="erro-precos" class="critico" role="alert" hidden></p>
       <div class="acoes"><button type="button" class="secundario" id="cancelar-precos">Cancelar</button><button type="submit">Salvar preços</button></div>
     </form>
-  </dialog><dialog id="dialog-fornecedores" aria-labelledby="titulo-fornecedores"><form id="form-fornecedores-produto"><h2 id="titulo-fornecedores">Fornecedores do produto</h2><p id="produto-fornecedores"></p><fieldset class="selecao-fornecedores"><legend>Empresas que entregam este produto</legend><div id="fornecedores-edicao"></div></fieldset><p class="ajuda">Selecione várias empresas ou desmarque para retirar o vínculo.</p><p id="erro-fornecedores" class="critico" role="alert" hidden></p><div class="acoes"><button type="button" class="secundario" id="cancelar-fornecedores">Cancelar</button><button type="submit">Salvar fornecedores</button></div></form></dialog></body></html>
+  </dialog><dialog id="dialog-fornecedores" aria-labelledby="titulo-fornecedores"><form id="form-fornecedores-produto"><h2 id="titulo-fornecedores">Fornecedores do produto</h2><p id="produto-fornecedores"></p><fieldset class="selecao-fornecedores"><legend>Empresas que entregam este produto</legend><div id="fornecedores-edicao"></div></fieldset><p class="ajuda">Selecione várias empresas ou desmarque para retirar o vínculo.</p><p id="erro-fornecedores" class="critico" role="alert" hidden></p><div class="acoes"><button type="button" class="secundario" id="cancelar-fornecedores">Cancelar</button><button type="submit">Salvar fornecedores</button></div></form></dialog><dialog id="dialog-codigo" aria-labelledby="titulo-codigo"><form id="form-codigo"><h2 id="titulo-codigo">Código de barras</h2><p id="produto-codigo"></p><label>Código<input id="codigo-produto" inputmode="numeric" pattern="[0-9]{8,14}" maxlength="14" placeholder="Deixe vazio para remover"></label><p id="erro-codigo" role="alert" class="critico" hidden></p><div class="acoes"><button type="button" id="cancelar-codigo" class="secundario">Cancelar</button><button type="submit">Salvar código</button></div></form></dialog></body></html>

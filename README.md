@@ -123,3 +123,19 @@ A agenda da empresa é editada em `PUT /api/fornecedores/{id}/entregas`. A rota 
 O menu lateral abre páginas independentes: `/index.html` (Início), `/produtos.html` (cadastro, listagem e edição), `/movimentacoes.html` (entradas/saídas), `/fornecedores.html` (empresas e entregas), `/reposicao.html` (sugestões) e `/assistente.html` (chat). A raiz `/` continua abrindo o Início depois do login. Cada página mostra apenas sua área e mantém o menu ativo. A navegação utiliza links normais, permitindo atualizar, abrir em outra aba e usar o histórico do navegador.
 
 `app.js` contém sessão, CSRF e funções compartilhadas; cada página carrega seu próprio script. O assistente é inicializado somente em sua página; navegar para outra página encerra o histórico de conversa mantido em memória. Todas as páginas continuam protegidas pelo login. Não houve mudança nas tabelas ou nos dados.
+
+## Caixa com pagamento manual
+
+A página inicial `/` ou `/index.html` é o Caixa. O resumo passou para `/visao-geral.html`. A página Estoque (`/movimentacoes.html`) registra recebimentos e perdas/ajustes; vendas devem ser realizadas no caixa.
+
+Cadastre um código de barras opcional no produto (8 a 14 dígitos, preservando zeros iniciais). O botão **Código** permite preencher produtos existentes. Um código identifica um produto e não pode ser repetido. Códigos são da unidade de estoque: se o produto é uma caixa, ler o código adiciona uma caixa. Produtos precisam de preço de venda informado para entrar no carrinho; também podem ser buscados pelo nome.
+
+Leitores USB no modo teclado podem preencher o campo **Código de barras**, normalmente com Enter ao final. Conecte o leitor, selecione esse campo e leia um código cadastrado. Cada leitura adiciona uma unidade, reunindo códigos repetidos no mesmo item. Se o leitor não enviar Enter, pressione Enter ou use o botão Adicionar pelo código. A compatibilidade com o equipamento físico deve ser verificada no computador do usuário; não há integração proprietária de scanner.
+
+O caixa permite quantidade, remoção, cancelamento antes do envio, desconto em reais e pagamento único por dinheiro, Pix ou cartão. Dinheiro exige valor recebido suficiente e calcula troco. Pix/cartão exigem confirmação manual do operador; a aplicação não cobra nem consulta bancos ou maquininhas. **Conferi e recebi o pagamento** é obrigatório.
+
+O servidor usa os preços cadastrados, verifica se mudaram desde a montagem do carrinho, bloqueia os produtos em ordem estável e valida saldo antes de registrar qualquer saída. Venda e baixa são atômicas. Identificador UUID estável e assinatura do pedido impedem repetição da mesma venda; reenvio idêntico retorna o registro salvo. Um envio pendente é mantido na sessão do navegador para reconciliação/reenvio após falha de conexão. Durante a pendência, o carrinho fica bloqueado. Limite de 100 produtos diferentes e 1 milhão de unidades por item; subtotal até R$ 999.999.999.999,99.
+
+O caixa mostra as últimas 20 vendas e permite visualizar comprovante interno sem valor fiscal. Os itens armazenam nomes, códigos, unidades e preços da venda; apagar produtos ou limpar estoque preserva as vendas já registradas. Esta etapa não implementa emissão fiscal, estorno de venda concluída, pagamentos divididos, impressão automática ou integração financeira.
+
+Rotas autenticadas: `POST /api/vendas` (pagamento confirmado e itens com preço esperado), `GET /api/vendas` (20 recentes), `PUT /api/produtos/{id}/codigo-barras`. Escritas protegidas por CSRF. Testes Java cobrem dinheiro/desconto/troco, Pix/cartão, atomicidade, reenvio, preço/saldo alterado, validação, código único e segurança. Testes DOM simulam leitura de código, carrinho, pagamento e recuperação de falha; não substituem teste físico do leitor.

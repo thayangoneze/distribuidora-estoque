@@ -9,6 +9,8 @@ import java.util.Optional;
 import java.util.List;
 
 public interface ProdutoRepository extends JpaRepository<Produto, Long> {
+    boolean existsByCodigoBarrasAndIdNot(String codigo, Long id);
+    boolean existsByCodigoBarras(String codigo);
     List<Produto> findByNomeIgnoreCase(String nome);
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Produto p order by p.id")

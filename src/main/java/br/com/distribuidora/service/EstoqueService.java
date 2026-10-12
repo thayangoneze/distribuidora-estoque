@@ -41,9 +41,21 @@ public class EstoqueService {
         if (p.calcularPrecoVenda) p.precoVenda = calcularVenda(p.precoCusto, p.percentualAcrescimo);
         else p.percentualAcrescimo = null;
         p.fornecedores = fornecedores.resolver(p.fornecedorIds);
+        p.codigoBarras=normalizarCodigo(p.codigoBarras);
+        if(p.codigoBarras!=null && produtos.existsByCodigoBarras(p.codigoBarras))
+            throw new ResponseStatusException(HttpStatus.CONFLICT,"Código de barras já utilizado por outro produto.");
         Produto salvo = produtos.save(p);
         if (p.saldo > 0) movimentacoes.save(new Movimentacao(salvo, Movimentacao.Tipo.SALDO_INICIAL, p.saldo));
         return salvo;
+    }
+    private String normalizarCodigo(String codigo) { return codigo==null || codigo.isBlank() ? null : codigo; }
+    @Transactional
+    public Produto atualizarCodigo(Long id, String codigo) {
+        Produto p=produtos.buscarParaAtualizar(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Produto não encontrado"));
+        codigo=normalizarCodigo(codigo);
+        if(codigo!=null && produtos.existsByCodigoBarrasAndIdNot(codigo,id))
+            throw new ResponseStatusException(HttpStatus.CONFLICT,"Código de barras já utilizado por outro produto.");
+        p.codigoBarras=codigo;return produtos.saveAndFlush(p);
     }
     @Transactional
     public Produto atualizarFornecedores(Long id, Set<Long> ids) {
@@ -87,6 +99,7 @@ public class EstoqueService {
     }
     @Transactional
     public Produto movimentar(Long id, Movimentacao.Tipo tipo, int quantidade) {
+        if (tipo != Movimentacao.Tipo.ENTRADA && tipo != Movimentacao.Tipo.SAIDA) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tipo de movimentação inválido");
         if (quantidade <= 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quantidade deve ser positiva");
         Produto produto = produtos.buscarParaAtualizar(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto não encontrado"));
         if (tipo == Movimentacao.Tipo.SAIDA && produto.saldo < quantidade)
