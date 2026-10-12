@@ -67,7 +67,7 @@ async function atualizar() {
       const linha = document.createElement('tr');
       const critico = p.saldo <= p.estoqueSeguranca;
       celula(linha, p.nome);
-      celula(linha, p.saldo, critico ? 'critico' : '');
+      celula(linha, `${p.saldo} ${p.unidadeEstoque || 'UN'}`, critico ? 'critico' : '');
       celula(linha, p.estoqueSeguranca);
       selo(linha, critico ? 'Estoque crítico' : 'Normal', critico ? 'alerta' : '');
       const acoes = document.createElement('td');

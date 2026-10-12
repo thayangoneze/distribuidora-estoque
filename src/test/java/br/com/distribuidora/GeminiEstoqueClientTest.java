@@ -9,6 +9,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.http.*;
 import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
+import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
@@ -19,7 +20,7 @@ class GeminiEstoqueClientTest {
     private static final String URL = BASE + "/models/gemini-3.5-flash-lite:generateContent";
     private final ContextoEstoqueService.Contexto contexto = new ContextoEstoqueService.Contexto(
         "2026-10-11T23:00:00Z", "2026-09-12", 30, null,
-        List.of(new ContextoEstoqueService.Item(1L, "Refrigerante", 32, 10, 3, 7,
+        List.of(new ContextoEstoqueService.Item(1L, "Refrigerante", "UN", 32, 10, 3, 7,
             List.of(new ContextoEstoqueService.Dia("2026-10-11", 40, 8)))), List.of());
     private final PerguntaEstoque pergunta = new PerguntaEstoque("Quanto saiu?", 30, List.of());
 
@@ -84,6 +85,23 @@ class GeminiEstoqueClientTest {
         var ia = new GeminiEstoqueClient(builder.build(), new ObjectMapper(), "teste", "gemini-3.5-flash-lite");
         servidor.expect(requestTo(URL)).andRespond(withSuccess("{\"promptFeedback\":{\"blockReason\":\"SAFETY\"}}", MediaType.APPLICATION_JSON));
         assertEquals(502, assertThrows(ResponseStatusException.class, () -> ia.responder(pergunta, contexto)).getStatusCode().value());
+        servidor.verify();
+    }
+    @Test void extraiNotaComSchemaSemConverterCaixasEmUnidades() throws Exception {
+        var builder=RestClient.builder().baseUrl(BASE);
+        var servidor=MockRestServiceServer.bindTo(builder).build();
+        var ia=new GeminiEstoqueClient(builder.build(),new ObjectMapper(),"teste","gemini-3.5-flash-lite");
+        String nota="{\"fornecedor\":\"Distribuidor\",\"numeroNota\":\"10\",\"dataEmissao\":null,\"observacoes\":null,\"itens\":[{\"descricao\":\"Refrigerante\",\"quantidadeNota\":10,\"unidadeNota\":\"CX\",\"valorUnitarioNota\":50.25,\"observacao\":null}]}";
+        String resposta=new ObjectMapper().writeValueAsString(Map.of("candidates",List.of(Map.of("finishReason","STOP",
+            "content",Map.of("parts",List.of(Map.of("text",nota)))))));
+        servidor.expect(requestTo(URL))
+            .andExpect(jsonPath("$.contents[0].parts[1].inlineData.mimeType").value("application/pdf"))
+            .andExpect(jsonPath("$.generationConfig.responseFormat.text.mimeType").value("application/json"))
+            .andExpect(jsonPath("$.generationConfig.responseFormat.text.schema.properties.itens.type").value("array"))
+            .andRespond(withSuccess(resposta,MediaType.APPLICATION_JSON));
+        var extraida=ia.extrairNota("%PDF-1.7".getBytes(),"application/pdf");
+        assertEquals("CX",extraida.itens().get(0).unidadeNota());
+        assertEquals(10,extraida.itens().get(0).quantidadeNota().intValueExact());
         servidor.verify();
     }
 }

@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.List;
 
 public interface ProdutoRepository extends JpaRepository<Produto, Long> {
+    List<Produto> findByNomeIgnoreCase(String nome);
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Produto p order by p.id")
     List<Produto> buscarTodosParaAtualizar();

@@ -80,7 +80,7 @@ mvn clean spring-boot:run
 
 A variável `OPENAI_API_KEY` não é mais utilizada. Não grave chaves no código nem no GitHub. Sem a chave Gemini, o sistema continua funcionando e o assistente informa que a integração precisa ser ativada. Para outro modelo disponível na sua conta, configure `GEMINI_MODEL` antes de iniciar.
 
-A consulta considera o fuso America/Sao_Paulo e períodos de 1 a 90 dias (a tela oferece 30/60/90). O contexto inclui saldos, histórico diário, primeira movimentação registrada e sugestões calculadas de 30 dias. Saídas podem representar vendas ou perdas; não há dados de faturamento, preços ou pedidos pendentes nesta etapa. Recomendações precisam ser revisadas pelo gestor.
+A consulta considera o fuso America/Sao_Paulo e períodos de 1 a 90 dias (a tela oferece 30/60/90). O contexto inclui saldos, histórico diário, primeira movimentação registrada e sugestões calculadas de 30 dias. Saídas podem representar vendas ou perdas; o contexto do assistente não inclui faturamento, preços ou pedidos pendentes nesta etapa. Recomendações precisam ser revisadas pelo gestor.
 
 A IA consulta informações e não executa SQL nem altera o banco. O histórico fica na memória da página, limitado às últimas oito mensagens por requisição; mudar o período inicia nova conversa. Nenhuma credencial de acesso ao sistema é enviada ao modelo. Há limite de 500 produtos e 240 mil caracteres de contexto, explicitado por erro em vez de truncamento silencioso.
 
@@ -88,4 +88,18 @@ Rotas protegidas: `GET /api/assistente/status` informa se há uma chave configur
 
 Falhas do Gemini são apresentadas sem expor o corpo bruto do erro ou a chave: limite diário/requisições (429), configuração/permissão (400/401/403) e modelo indisponível (404). Respostas incompletas, bloqueadas ou sem texto não são apresentadas como concluídas; partes de pensamento interno são descartadas.
 
-Testes com H2 validam consulta ao contexto e acesso autenticado; testes HTTP simulam o Gemini sem chamadas reais. Leitura de notas por imagem e modelo treinado de previsão de demanda ainda não estão implementados.
+Testes com H2 validam consulta ao contexto e acesso autenticado; testes HTTP simulam o Gemini sem chamadas reais. O modelo treinado de previsão de demanda ainda não está implementado.
+
+## Importar nota com Gemini
+
+No menu **Importar nota**, selecione JPG, PNG, WEBP ou PDF de até 8 MB. O servidor envia o documento ao Gemini e solicita JSON estruturado com fornecedor, número/data da nota, descrições, quantidades, unidades e preços unitários originais. Campos ilegíveis ficam em branco para revisão. O arquivo não é armazenado: são salvos seu hash SHA-256 e os dados extraídos/confirmados.
+
+A análise cria uma revisão, sem produtos nem movimentações. Confira os itens, selecione produtos existentes ou novos e informe a quantidade de entrada na unidade de estoque (UN, CX ou PCT). Caixas não são convertidas automaticamente em garrafas: a embalagem deve ser conferida pelo gestor. O preço salvo é por unidade da nota, sem conversão implícita para unidade de estoque. Campos de preço/quantidade originais podem ficar vazios se não forem legíveis; a quantidade de entrada é obrigatória.
+
+Só depois de marcar **Conferi os produtos, vínculos, quantidades, unidades e preços** e confirmar a entrada o sistema cria os produtos novos e registra as movimentações. A transação inteira é revertida se algum item falhar. Produto existente mantém seu nome e parâmetros; a seleção inicial por nome é sugerida apenas quando existe uma única correspondência exata, ignorando maiúsculas/minúsculas.
+
+O mesmo arquivo não pode ser confirmado duas vezes. A proteção usa o hash do arquivo; fotografias diferentes da mesma nota podem ter hashes diferentes, portanto confira também o número e o fornecedor. O rascunho pode ser recuperado reenviando o mesmo arquivo antes da confirmação. Cancelar a revisão não altera o estoque. A limpeza de produtos mantém os registros de importação para impedir a repetição de arquivos confirmados.
+
+A unidade de produtos anteriores sem esse campo é tratada como UN. As novas colunas de preços/origem nas movimentações são opcionais e as tabelas são atualizadas pelo Hibernate ao iniciar no perfil de desenvolvimento. A data de emissão é guardada na importação; a entrada é registrada na data da confirmação, sem retroagir movimentos.
+
+Rotas autenticadas e protegidas por CSRF: `POST /api/notas/analisar` (multipart, campo `arquivo`) e `POST /api/notas/{id}/confirmar` (JSON revisado). Limite de 100 itens por importação. Os testes cobrem extração multimodal simulada, revisão sem baixa, produto novo/existente, duplicação do arquivo, validação, rollback e proteção de endpoints. O teste de leitura ao vivo usa a chave Gemini já configurada no seu computador.
