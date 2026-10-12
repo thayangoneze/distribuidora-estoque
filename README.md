@@ -90,22 +90,8 @@ Falhas do Gemini são apresentadas sem expor o corpo bruto do erro ou a chave: l
 
 Testes com H2 validam consulta ao contexto e acesso autenticado; testes HTTP simulam o Gemini sem chamadas reais. O modelo treinado de previsão de demanda ainda não está implementado.
 
-## Importar nota com Gemini
-
-No menu **Importar nota**, selecione JPG, PNG, WEBP ou PDF de até 8 MB. O servidor envia o documento ao Gemini e solicita JSON estruturado com fornecedor, número/data da nota, descrições, quantidades, unidades e preços unitários originais. Campos ilegíveis ficam em branco para revisão. O arquivo não é armazenado: são salvos seu hash SHA-256 e os dados extraídos/confirmados.
-
-A análise cria uma revisão, sem produtos nem movimentações. Confira os itens, selecione produtos existentes ou novos e informe a quantidade de entrada na unidade de estoque (UN, CX ou PCT). Caixas não são convertidas automaticamente em garrafas: a embalagem deve ser conferida pelo gestor. O preço original é preservado na movimentação. O custo do produto é calculado como preço unitário da nota × quantidade na nota ÷ quantidade de entrada, arredondado a centavos. Confira a conversão antes de confirmar. Campos de preço/quantidade originais podem ficar vazios se não forem legíveis; a quantidade de entrada é obrigatória.
-
-Só depois de marcar **Conferi os produtos, vínculos, quantidades, unidades e preços** e confirmar a entrada o sistema cria os produtos novos e registra as movimentações. A transação inteira é revertida se algum item falhar. Produto existente mantém seu nome, preço de venda e parâmetros; a seleção inicial por nome é sugerida apenas quando existe uma única correspondência exata, ignorando maiúsculas/minúsculas.
-
-O mesmo arquivo não pode ser confirmado duas vezes. A proteção usa o hash do arquivo; fotografias diferentes da mesma nota podem ter hashes diferentes, portanto confira também o número e o fornecedor. O rascunho pode ser recuperado reenviando o mesmo arquivo antes da confirmação. Cancelar a revisão não altera o estoque. A limpeza de produtos mantém os registros de importação para impedir a repetição de arquivos confirmados.
-
-A unidade de produtos anteriores sem esse campo é tratada como UN. As novas colunas de preços/origem nas movimentações são opcionais e as tabelas são atualizadas pelo Hibernate ao iniciar no perfil de desenvolvimento. A data de emissão é guardada na importação; a entrada é registrada na data da confirmação, sem retroagir movimentos.
-
-Rotas autenticadas e protegidas por CSRF: `POST /api/notas/analisar` (multipart, campo `arquivo`) e `POST /api/notas/{id}/confirmar` (JSON revisado). Limite de 100 itens por importação. Os testes cobrem extração multimodal simulada, revisão sem baixa, produto novo/existente, duplicação do arquivo, validação, rollback e proteção de endpoints. O teste de leitura ao vivo usa a chave Gemini já configurada no seu computador.
-
 ## Preços de custo e venda
 
 O cadastro e a tabela de estoque mostram custo e venda em reais por unidade de estoque (UN, CX ou PCT). Use **Preços** na linha do produto para editar os valores sem alterar saldo ou movimentações. Campos em branco significam “Não informado”; zero é um valor informado. Produtos anteriores continuam com os preços em branco até serem preenchidos.
 
-Na confirmação da nota, o último custo é atualizado somente quando quantidade e preço originais estão informados. Exemplo: 10 caixas a R$ 50,25 com entrada de 120 unidades resultam em R$ 4,19 por UN. O preço de venda de produtos novos pode ser informado na revisão; o de produtos existentes é preservado. Esse custo é o último recebido/cadastrado, não uma média ponderada. A diferença entre preços não representa lucro líquido.
+Os preços são preenchidos manualmente. O custo é o último valor cadastrado, não uma média ponderada. A diferença entre preços não representa lucro líquido. O assistente Gemini permanece disponível para consultas em texto sobre o estoque.

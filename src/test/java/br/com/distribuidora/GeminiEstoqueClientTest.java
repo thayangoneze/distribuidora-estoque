@@ -87,21 +87,4 @@ class GeminiEstoqueClientTest {
         assertEquals(502, assertThrows(ResponseStatusException.class, () -> ia.responder(pergunta, contexto)).getStatusCode().value());
         servidor.verify();
     }
-    @Test void extraiNotaComSchemaSemConverterCaixasEmUnidades() throws Exception {
-        var builder=RestClient.builder().baseUrl(BASE);
-        var servidor=MockRestServiceServer.bindTo(builder).build();
-        var ia=new GeminiEstoqueClient(builder.build(),new ObjectMapper(),"teste","gemini-3.5-flash-lite");
-        String nota="{\"fornecedor\":\"Distribuidor\",\"numeroNota\":\"10\",\"dataEmissao\":null,\"observacoes\":null,\"itens\":[{\"descricao\":\"Refrigerante\",\"quantidadeNota\":10,\"unidadeNota\":\"CX\",\"valorUnitarioNota\":50.25,\"observacao\":null}]}";
-        String resposta=new ObjectMapper().writeValueAsString(Map.of("candidates",List.of(Map.of("finishReason","STOP",
-            "content",Map.of("parts",List.of(Map.of("text",nota)))))));
-        servidor.expect(requestTo(URL))
-            .andExpect(jsonPath("$.contents[0].parts[1].inlineData.mimeType").value("application/pdf"))
-            .andExpect(jsonPath("$.generationConfig.responseFormat.text.mimeType").value("application/json"))
-            .andExpect(jsonPath("$.generationConfig.responseFormat.text.schema.properties.itens.type").value("array"))
-            .andRespond(withSuccess(resposta,MediaType.APPLICATION_JSON));
-        var extraida=ia.extrairNota("%PDF-1.7".getBytes(),"application/pdf");
-        assertEquals("CX",extraida.itens().get(0).unidadeNota());
-        assertEquals(10,extraida.itens().get(0).quantidadeNota().intValueExact());
-        servidor.verify();
-    }
 }
