@@ -57,4 +57,22 @@ class OpenAiEstoqueClientTest {
         assertEquals(502, assertThrows(ResponseStatusException.class, () -> ia.responder(pergunta, contexto)).getStatusCode().value());
         servidor.verify();
     }
+    @Test void faltaDeSaldoNaoEhTratadaComoEsperaTemporaria() {
+        verificarLimite("credit_balance_exhausted", "insufficient_quota", "sem créditos");
+        verificarLimite("insufficient_quota", "insufficient_quota", "sem créditos ou sem cota");
+        verificarLimite("project_spend_limit_exceeded", "insufficient_quota", "limite de gastos");
+        verificarLimite("slow_down", "rate_limit_error", "muitas requisições");
+    }
+    private void verificarLimite(String codigo, String tipo, String mensagem) {
+        var builder = RestClient.builder().baseUrl("https://api.openai.com/v1");
+        var servidor = MockRestServiceServer.bindTo(builder).build();
+        var ia = new OpenAiEstoqueClient(builder.build(), new ObjectMapper(), "segredo", "gpt-4.1-mini");
+        servidor.expect(requestTo("https://api.openai.com/v1/responses"))
+            .andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS).contentType(MediaType.APPLICATION_JSON)
+                .body("{\"error\":{\"code\":\"" + codigo + "\",\"type\":\"" + tipo + "\"}}"));
+        var erro = assertThrows(ResponseStatusException.class, () -> ia.responder(pergunta, contexto));
+        assertTrue(erro.getReason().contains(mensagem));
+        assertFalse(erro.getReason().contains("segredo"));
+        servidor.verify();
+    }
 }

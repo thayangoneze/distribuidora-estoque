@@ -56,8 +56,24 @@ public class OpenAiEstoqueClient {
                 .body(Map.of("model", modelo, "instructions", instrucoes, "input", input,
                     "max_output_tokens", 1000, "store", false))
                 .retrieve().onStatus(s -> s.isError(), (request, response) -> {
-                    if (response.getStatusCode().value() == 429)
-                        throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "O serviço de IA atingiu seu limite. Tente novamente mais tarde.");
+                    if (response.getStatusCode().value() == 429) {
+                        String codigo = "", tipo = "";
+                        try {
+                            JsonNode erro = mapper.readTree(response.getBody()).path("error");
+                            codigo = erro.path("code").asText(); tipo = erro.path("type").asText();
+                        } catch (Exception ignorado) { /* Não propagar o corpo do provedor. */ }
+                        String motivo;
+                        if ("credit_balance_exhausted".equals(codigo))
+                            motivo = "A conta da API de IA está sem créditos. O administrador precisa adicionar saldo na plataforma OpenAI.";
+                        else if (Set.of("organization_spend_limit_exceeded", "project_spend_limit_exceeded", "organization_usage_limit_exceeded").contains(codigo))
+                            motivo = "A conta da API de IA atingiu um limite de gastos ou uso. O administrador precisa verificar os limites na plataforma OpenAI.";
+                        else if ("insufficient_quota".equals(codigo) || "insufficient_quota".equals(tipo))
+                            motivo = "A conta da API de IA está sem créditos ou sem cota disponível. O administrador precisa verificar saldo e limites na plataforma OpenAI.";
+                        else if ("rate_limit_error".equals(tipo) || Set.of("rate_limit_exceeded", "slow_down").contains(codigo))
+                            motivo = "O serviço de IA recebeu muitas requisições em pouco tempo. Aguarde antes de tentar novamente.";
+                        else motivo = "A API de IA recusou a consulta por limite de uso. O administrador precisa verificar saldo, cota e limites de requisições.";
+                        throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, motivo);
+                    }
                     throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Não foi possível consultar a IA. O administrador deve verificar a integração.");
                 }).body(JsonNode.class);
             if (resposta == null || !"completed".equals(resposta.path("status").asText()))
