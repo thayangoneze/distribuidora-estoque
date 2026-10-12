@@ -117,3 +117,9 @@ Os dias de entrega são configurados por empresa. Cada produto usa a união dos 
 API autenticada: `GET/POST /api/fornecedores` e `PUT /api/produtos/{id}/fornecedores` com `fornecedorIds`. O cadastro de produto também aceita `fornecedorIds`. As rotas de escrita exigem CSRF; IDs inexistentes são rejeitados sem gravar cadastro ou saldo parcial.
 
 A agenda da empresa é editada em `PUT /api/fornecedores/{id}/entregas`. A rota antiga de agenda por produto foi removida. Alterar os dias de uma empresa atualiza a agenda efetiva de todos os produtos vinculados sem alterar saldos.
+
+## Navegação em páginas separadas
+
+O menu lateral abre páginas independentes: `/index.html` (Início), `/produtos.html` (cadastro, listagem e edição), `/movimentacoes.html` (entradas/saídas), `/fornecedores.html` (empresas e entregas), `/reposicao.html` (sugestões) e `/assistente.html` (chat). A raiz `/` continua abrindo o Início depois do login. Cada página mostra apenas sua área e mantém o menu ativo. A navegação utiliza links normais, permitindo atualizar, abrir em outra aba e usar o histórico do navegador.
+
+`app.js` contém sessão, CSRF e funções compartilhadas; cada página carrega seu próprio script. O assistente é inicializado somente em sua página; navegar para outra página encerra o histórico de conversa mantido em memória. Todas as páginas continuam protegidas pelo login. Não houve mudança nas tabelas ou nos dados.

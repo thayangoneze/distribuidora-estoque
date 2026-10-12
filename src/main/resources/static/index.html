@@ -3,132 +3,31 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Estoque | Distribuidora do Gaúcho</title>
+  <title>Início | Distribuidora do Gaúcho</title>
   <link rel="stylesheet" href="/css/styles.css">
   <script src="/js/app.js" defer></script>
-  <script src="/js/assistente.js" defer></script>
+  <script src="/js/inicio.js" defer></script>
 </head>
 <body>
   <a class="pular" href="#conteudo">Pular para o conteúdo</a>
   <aside class="lateral" aria-label="Navegação principal">
-    <a class="identidade" href="#visao-geral"><span class="simbolo" aria-hidden="true">G.</span><span>Gaúcho<span class="marca-detalhe">GESTÃO DE ESTOQUE</span></span></a>
+    <a class="identidade" href="/index.html"><span class="simbolo" aria-hidden="true">G.</span><span>Gaúcho<span class="marca-detalhe">GESTÃO DE ESTOQUE</span></span></a>
     <span class="rotulo-menu">ESPAÇO DE TRABALHO</span>
-    <nav>
-      <a href="#visao-geral" class="nav-link ativo" aria-current="location"><span aria-hidden="true">▦</span>Visão geral</a>
-      <a href="#operacoes" class="nav-link"><span aria-hidden="true">↔</span>Movimentações</a>
-      <a href="#estoque" class="nav-link"><span aria-hidden="true">▤</span>Produtos</a>
-      <a href="#fornecedores" class="nav-link"><span aria-hidden="true">◇</span>Fornecedores</a>
-      <a href="#reposicao" class="nav-link"><span aria-hidden="true">↗</span>Reposição</a>
-      <a href="#assistente" class="nav-link"><span aria-hidden="true">✦</span>Assistente de estoque</a>
-    </nav>
+    <nav><a href="/index.html" class="nav-link ativo" aria-current="page"><span aria-hidden="true">▦</span>Início</a>
+<a href="/produtos.html" class="nav-link"><span aria-hidden="true">▤</span>Produtos</a>
+<a href="/movimentacoes.html" class="nav-link"><span aria-hidden="true">↔</span>Movimentações</a>
+<a href="/fornecedores.html" class="nav-link"><span aria-hidden="true">◇</span>Fornecedores</a>
+<a href="/reposicao.html" class="nav-link"><span aria-hidden="true">↗</span>Reposição</a>
+<a href="/assistente.html" class="nav-link"><span aria-hidden="true">✦</span>Assistente</a></nav>
     <div class="rodape-lateral"><span class="avatar" aria-hidden="true">A</span><div>Administrador<small>Painel de gestão</small></div><button type="button" id="sair">Sair</button></div>
   </aside>
   <div class="area-principal" id="conteudo">
-    <header class="topo"><span>GESTÃO <span class="barra">/</span> ESTOQUE</span><span class="etiqueta-topo">Painel do gestor</span></header>
-    <main class="container">
-      <section class="hero" id="visao-geral">
-        <div><span class="sobretitulo">SEU ESTOQUE, SOB CONTROLE</span><h1>Uma visão clara.<br>Melhores decisões.</h1><p class="intro">Acompanhe seus produtos, registre movimentações<br class="quebra-desktop"> e planeje a próxima reposição.</p><a href="#operacoes" class="atalho">Registrar movimentação <span aria-hidden="true">↗</span></a></div>
+    <header class="topo"><span>GESTÃO <span class="barra">/</span> INÍCIO</span><span class="etiqueta-topo">Painel do gestor</span></header>
+    <main class="container"><div id="mensagem" role="status" aria-live="polite" hidden></div><section class="hero" id="visao-geral">
+        <div><span class="sobretitulo">SEU ESTOQUE, SOB CONTROLE</span><h1>Uma visão clara.<br>Melhores decisões.</h1><p class="intro">Acompanhe seus produtos, registre movimentações<br class="quebra-desktop"> e planeje a próxima reposição.</p><a href="/movimentacoes.html" class="atalho">Registrar movimentação <span aria-hidden="true">↗</span></a></div>
         <div class="hero-grafico" aria-hidden="true"><div class="caixa caixa-1"></div><div class="caixa caixa-2"></div><div class="caixa caixa-3"></div><span>ESTOQUE / ORGANIZAÇÃO / CONTROLE</span></div>
-      </section>
-    <div id="mensagem" role="status" aria-live="polite" hidden></div>
-    <section class="resumo" aria-label="Resumo">
+      </section><section class="resumo" aria-label="Resumo">
       <div class="cartao"><span>Produtos cadastrados <span class="icone-cartao" aria-hidden="true">▤</span></span><strong id="total-produtos">—</strong><small>Itens no seu catálogo</small></div>
       <div class="cartao"><span>Estoque crítico <span class="icone-cartao" aria-hidden="true">!</span></span><strong id="total-criticos">—</strong><small>Produtos que exigem atenção</small></div>
       <div class="cartao"><span>Sugestões de compra <span class="icone-cartao" aria-hidden="true">↗</span></span><strong id="total-sugestoes">—</strong><small>Itens recomendados para reposição</small></div>
-    </section>
-    <div class="grade" id="operacoes">
-      <section class="painel">
-        <div class="cabecalho-painel"><span class="numero">01</span><div><h2>Novo produto</h2><p>Cadastre um item e defina os parâmetros de reposição.</p></div></div>
-        <form id="form-produto">
-          <label>Nome do produto<input name="nome" required maxlength="255" placeholder="Ex.: Refrigerante 2 L"></label>
-          <label>Unidade do estoque<select name="unidadeEstoque"><option value="UN">Unidade (UN)</option><option value="CX">Caixa (CX)</option><option value="PCT">Pacote (PCT)</option></select></label>
-          <label>Quantidade inicial<input name="saldo" type="number" min="0" max="2147483647" step="1" required value="0"></label>
-          <div class="campos">
-            <label>Preço de custo (R$)<input name="precoCusto" type="number" min="0" max="999999999999.99" step="0.01" placeholder="Não informado"></label>
-            <label>Como definir a venda<select name="modoPreco"><option value="manual">Digitar meu preço</option><option value="percentual">Calcular por porcentagem</option></select></label>
-<label class="campo-percentual" hidden>Acréscimo sobre o custo (%)<input name="percentualAcrescimo" type="number" min="0" max="100000" step="0.01" placeholder="Ex.: 30"></label>
-<p class="ajuda ajuda-percentual" hidden>Custo × (1 + porcentagem ÷ 100), arredondado ao R$ 0,50 mais próximo. Ex.: R$ 10 + 30% = R$ 13. Você pode voltar ao preço manual.</p>
-<label>Preço de venda (R$)<input name="precoVenda" type="number" min="0" max="999999999999.99" step="0.01" placeholder="Não informado"></label>
-          </div>
-          <p class="ajuda">Informe os preços por unidade de estoque: unidade, caixa ou pacote.</p>
-          <div class="campos">
-            <label>Estoque de segurança <span class="dica">Quantidade mínima de proteção</span><input name="estoqueSeguranca" type="number" min="0" required value="10"></label>
-          </div>
-          <fieldset class="selecao-fornecedores"><legend>Empresas que entregam este produto</legend><div id="fornecedores-novo"></div></fieldset>
-          <p class="ajuda">Selecione uma ou mais empresas. <a href="#fornecedores">Cadastre uma empresa fornecedora</a> se ainda não estiver na lista.</p>
-          <button type="submit">Cadastrar produto</button>
-        </form>
-      </section>
-      <section class="painel">
-        <div class="cabecalho-painel"><span class="numero">02</span><div><h2>Movimentar estoque</h2><p>Registre o que entra e o que sai da distribuidora.</p></div></div>
-        <form id="form-movimentacao">
-          <label>Produto<select name="produtoId" id="produto-id" required><option value="">Selecione um produto</option></select></label>
-          <div class="campos dois">
-            <label>Tipo<select name="tipo"><option value="ENTRADA">Entrada</option><option value="SAIDA">Saída</option></select></label>
-            <label>Quantidade<input name="quantidade" type="number" min="1" required value="1"></label>
-          </div>
-          <button type="submit">Registrar movimentação</button>
-        </form>
-      </section>
-    </div>
-    <section class="painel tabela-painel" id="estoque">
-      <div class="titulo-linha"><div><span class="sobretitulo escuro">CATÁLOGO</span><h2>Produtos em estoque</h2></div><div class="acoes"><button type="button" class="secundario" id="atualizar">Atualizar</button><button type="button" class="perigo" id="limpar-estoque" disabled>Limpar todo o estoque</button></div></div>
-      <div class="rolagem"><table><thead><tr><th>Produto</th><th>Saldo</th><th>Custo (R$)</th><th>Venda (R$)</th><th>Estoque de segurança</th><th>Entregas</th><th>Fornecedores</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="lista-produtos"></tbody></table></div>
-    </section>
-    <section class="painel tabela-painel" id="fornecedores">
-      <div class="titulo-linha"><div><span class="sobretitulo escuro">EMPRESAS PARCEIRAS</span><h2>Fornecedores</h2></div></div>
-      <p class="ajuda">Cadastre as empresas e vincule os produtos que cada uma entrega. Um produto pode ter vários fornecedores.</p>
-      <form id="form-fornecedor"><label>Nome da empresa<input name="nome" required maxlength="255" placeholder="Ex.: Ambev, Coca-Cola"></label><fieldset class="dias-entrega"><legend>Dias de entrega</legend><label><input type="checkbox" name="diasEntrega" value="1">Segunda</label><label><input type="checkbox" name="diasEntrega" value="2">Terça</label><label><input type="checkbox" name="diasEntrega" value="3">Quarta</label><label><input type="checkbox" name="diasEntrega" value="4">Quinta</label><label><input type="checkbox" name="diasEntrega" value="5">Sexta</label><label><input type="checkbox" name="diasEntrega" value="6">Sábado</label><label><input type="checkbox" name="diasEntrega" value="7">Domingo</label></fieldset><p class="ajuda">Marque os dias em que o fornecedor entrega. Sem seleção, não há previsão de entrega.</p>
-<button type="submit">Cadastrar empresa</button></form>
-      <p id="status-fornecedor" role="status" hidden></p>
-      <div class="rolagem"><table><thead><tr><th>Empresa</th><th>Dias de entrega</th><th>Produtos fornecidos</th><th>Ações</th></tr></thead><tbody id="lista-fornecedores"></tbody></table></div>
-    </section>
-    <section class="painel tabela-painel" id="reposicao">
-      <div class="titulo-linha"><div><span class="sobretitulo escuro">PLANEJAMENTO</span><h2>Sugestão de reposição</h2></div><label class="periodo">Analisar últimos <select id="periodo"><option value="30">30 dias</option><option value="60">60 dias</option><option value="90">90 dias</option></select></label></div>
-      <p class="ajuda">Itens sem saída nos últimos 60 dias são sinalizados e não entram na sugestão automática.</p>
-      <div class="rolagem"><table><thead><tr><th>Produto</th><th>Média/dia</th><th>Ponto de reposição</th><th>Quantidade sugerida</th><th>Observação</th></tr></thead><tbody id="lista-reposicao"></tbody></table></div>
-    </section>
-    <section class="painel tabela-painel" id="assistente">
-      <div class="titulo-linha"><div><span class="sobretitulo escuro">INTELIGÊNCIA ARTIFICIAL</span><h2>Assistente de estoque</h2></div><button type="button" class="secundario" id="nova-conversa">Nova conversa</button></div>
-      <p class="ajuda">Pergunte sobre seus produtos, movimentações e necessidades de reposição.</p>
-      <p id="status-ia" role="status" class="ajuda">Verificando disponibilidade do assistente…</p>
-      <div class="perguntas-rapidas" aria-label="Sugestões de perguntas"><button type="button" class="secundario">Quais produtos estão com estoque crítico?</button><button type="button" class="secundario">Qual produto teve mais saída no período?</button><button type="button" class="secundario">O que devo comprar e por quê?</button></div>
-      <div id="conversa-ia" class="conversa" role="log" aria-live="polite" aria-label="Conversa com o assistente"><p class="ajuda boas-vindas">Olá! Consulte os dados reais do seu estoque fazendo uma pergunta abaixo.</p></div>
-      <p id="erro-ia" role="alert" class="ajuda" hidden></p>
-      <form id="form-assistente">
-        <div class="titulo-linha"><label class="periodo">Período de análise<select id="periodo-ia"><option value="30">30 dias</option><option value="60">60 dias</option><option value="90">90 dias</option></select></label><span class="ajuda">As respostas são sugestões para revisão do gestor.</span></div>
-        <label for="pergunta-ia">Sua pergunta</label>
-        <textarea id="pergunta-ia" required maxlength="2000" rows="3" placeholder="Ex.: Quanto saiu de refrigerante neste período?"></textarea>
-        <button type="submit" id="enviar-ia" disabled>Enviar pergunta</button>
-      </form>
-    </section>
-    <footer class="rodape-pagina">Distribuidora do Gaúcho <span>Controle de estoque e reposição</span></footer>
-  </main>
-  </div>
-  <dialog id="dialog-limpeza" aria-labelledby="titulo-limpeza">
-    <form id="form-limpeza">
-      <h2 id="titulo-limpeza">Limpar todo o estoque</h2>
-      <p>Todos os produtos e seus históricos serão apagados. Esta ação não pode ser desfeita.</p>
-      <label>Senha do administrador<input id="senha-administrador" name="senha" type="password" required autocomplete="current-password"></label>
-      <p id="erro-limpeza" role="alert" class="critico" hidden></p>
-      <div class="acoes"><button type="button" class="secundario" id="cancelar-limpeza">Cancelar</button><button type="submit" class="perigo">Apagar todo o estoque</button></div>
-    </form>
-  </dialog>
-  <dialog id="dialog-precos" aria-labelledby="titulo-precos">
-    <form id="form-precos">
-      <h2 id="titulo-precos">Editar preços</h2>
-      <p id="produto-precos"></p>
-      <label>Preço de custo (R$)<input name="precoCusto" type="number" min="0" max="999999999999.99" step="0.01" placeholder="Não informado"></label>
-      <label>Como definir a venda<select name="modoPreco"><option value="manual">Digitar meu preço</option><option value="percentual">Calcular por porcentagem</option></select></label>
-<label class="campo-percentual" hidden>Acréscimo sobre o custo (%)<input name="percentualAcrescimo" type="number" min="0" max="100000" step="0.01" placeholder="Ex.: 30"></label>
-<p class="ajuda ajuda-percentual" hidden>Custo × (1 + porcentagem ÷ 100), arredondado ao R$ 0,50 mais próximo. Ex.: R$ 10 + 30% = R$ 13. Você pode voltar ao preço manual.</p>
-<label>Preço de venda (R$)<input name="precoVenda" type="number" min="0" max="999999999999.99" step="0.01" placeholder="Não informado"></label>
-      <p class="ajuda">Deixe em branco para marcar como não informado. Alterar preços não altera o saldo.</p>
-      <p id="erro-precos" class="critico" role="alert" hidden></p>
-      <div class="acoes"><button type="button" class="secundario" id="cancelar-precos">Cancelar</button><button type="submit">Salvar preços</button></div>
-    </form>
-  </dialog>
-<dialog id="dialog-entregas" aria-labelledby="titulo-entregas"><form id="form-entregas"><h2 id="titulo-entregas">Dias de entrega da empresa</h2><p id="produto-entregas"></p><fieldset class="dias-entrega"><legend>Dias de entrega</legend><label><input type="checkbox" name="diasEntrega" value="1">Segunda</label><label><input type="checkbox" name="diasEntrega" value="2">Terça</label><label><input type="checkbox" name="diasEntrega" value="3">Quarta</label><label><input type="checkbox" name="diasEntrega" value="4">Quinta</label><label><input type="checkbox" name="diasEntrega" value="5">Sexta</label><label><input type="checkbox" name="diasEntrega" value="6">Sábado</label><label><input type="checkbox" name="diasEntrega" value="7">Domingo</label></fieldset><p class="ajuda">Marque os dias em que o fornecedor entrega. Sem seleção, não há previsão de entrega.</p><p id="erro-entregas" class="critico" role="alert" hidden></p><div class="acoes"><button type="button" class="secundario" id="cancelar-entregas">Cancelar</button><button type="submit">Salvar entregas</button></div></form></dialog>
-<dialog id="dialog-fornecedores" aria-labelledby="titulo-fornecedores"><form id="form-fornecedores-produto"><h2 id="titulo-fornecedores">Fornecedores do produto</h2><p id="produto-fornecedores"></p><fieldset class="selecao-fornecedores"><legend>Empresas que entregam este produto</legend><div id="fornecedores-edicao"></div></fieldset><p class="ajuda">Selecione várias empresas ou desmarque para retirar o vínculo.</p><p id="erro-fornecedores" class="critico" role="alert" hidden></p><div class="acoes"><button type="button" class="secundario" id="cancelar-fornecedores">Cancelar</button><button type="submit">Salvar fornecedores</button></div></form></dialog>
-</body>
-</html>
+    </section><section class="painel"><h2>O que você deseja fazer?</h2><div class="atalhos-paginas"><a href="/produtos.html">Cadastrar e consultar produtos ↗</a><a href="/movimentacoes.html">Registrar entradas e saídas ↗</a><a href="/fornecedores.html">Gerenciar empresas e entregas ↗</a><a href="/reposicao.html">Planejar a reposição ↗</a><a href="/assistente.html">Conversar com o assistente ↗</a></div></section><footer class="rodape-pagina">Distribuidora do Gaúcho <span>Controle de estoque e reposição</span></footer></main></div></body></html>

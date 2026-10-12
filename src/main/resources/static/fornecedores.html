@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fornecedores | Distribuidora do Gaúcho</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="/js/app.js" defer></script>
+  <script src="/js/fornecedores.js" defer></script>
+</head>
+<body>
+  <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+  <aside class="lateral" aria-label="Navegação principal">
+    <a class="identidade" href="/index.html"><span class="simbolo" aria-hidden="true">G.</span><span>Gaúcho<span class="marca-detalhe">GESTÃO DE ESTOQUE</span></span></a>
+    <span class="rotulo-menu">ESPAÇO DE TRABALHO</span>
+    <nav><a href="/index.html" class="nav-link"><span aria-hidden="true">▦</span>Início</a>
+<a href="/produtos.html" class="nav-link"><span aria-hidden="true">▤</span>Produtos</a>
+<a href="/movimentacoes.html" class="nav-link"><span aria-hidden="true">↔</span>Movimentações</a>
+<a href="/fornecedores.html" class="nav-link ativo" aria-current="page"><span aria-hidden="true">◇</span>Fornecedores</a>
+<a href="/reposicao.html" class="nav-link"><span aria-hidden="true">↗</span>Reposição</a>
+<a href="/assistente.html" class="nav-link"><span aria-hidden="true">✦</span>Assistente</a></nav>
+    <div class="rodape-lateral"><span class="avatar" aria-hidden="true">A</span><div>Administrador<small>Painel de gestão</small></div><button type="button" id="sair">Sair</button></div>
+  </aside>
+  <div class="area-principal" id="conteudo">
+    <header class="topo"><span>GESTÃO <span class="barra">/</span> FORNECEDORES</span><span class="etiqueta-topo">Painel do gestor</span></header>
+    <main class="container"><div id="mensagem" role="status" aria-live="polite" hidden></div><header class="cabecalho-pagina"><span class="sobretitulo escuro">GESTÃO DA DISTRIBUIDORA</span><h1>Fornecedores</h1></header><section class="painel tabela-painel" id="fornecedores">
+      <div class="titulo-linha"><div><span class="sobretitulo escuro">EMPRESAS PARCEIRAS</span><h2>Fornecedores</h2></div></div>
+      <p class="ajuda">Cadastre as empresas e vincule os produtos que cada uma entrega. Um produto pode ter vários fornecedores.</p>
+      <form id="form-fornecedor"><label>Nome da empresa<input name="nome" required maxlength="255" placeholder="Ex.: Ambev, Coca-Cola"></label><fieldset class="dias-entrega"><legend>Dias de entrega</legend><label><input type="checkbox" name="diasEntrega" value="1">Segunda</label><label><input type="checkbox" name="diasEntrega" value="2">Terça</label><label><input type="checkbox" name="diasEntrega" value="3">Quarta</label><label><input type="checkbox" name="diasEntrega" value="4">Quinta</label><label><input type="checkbox" name="diasEntrega" value="5">Sexta</label><label><input type="checkbox" name="diasEntrega" value="6">Sábado</label><label><input type="checkbox" name="diasEntrega" value="7">Domingo</label></fieldset><p class="ajuda">Marque os dias em que o fornecedor entrega. Sem seleção, não há previsão de entrega.</p>
+<button type="submit">Cadastrar empresa</button></form>
+      <p id="status-fornecedor" role="status" hidden></p>
+      <div class="rolagem"><table><thead><tr><th>Empresa</th><th>Dias de entrega</th><th>Produtos fornecidos</th><th>Ações</th></tr></thead><tbody id="lista-fornecedores"></tbody></table></div>
+    </section><footer class="rodape-pagina">Distribuidora do Gaúcho <span>Controle de estoque e reposição</span></footer></main></div><dialog id="dialog-entregas" aria-labelledby="titulo-entregas"><form id="form-entregas"><h2 id="titulo-entregas">Dias de entrega da empresa</h2><p id="produto-entregas"></p><fieldset class="dias-entrega"><legend>Dias de entrega</legend><label><input type="checkbox" name="diasEntrega" value="1">Segunda</label><label><input type="checkbox" name="diasEntrega" value="2">Terça</label><label><input type="checkbox" name="diasEntrega" value="3">Quarta</label><label><input type="checkbox" name="diasEntrega" value="4">Quinta</label><label><input type="checkbox" name="diasEntrega" value="5">Sexta</label><label><input type="checkbox" name="diasEntrega" value="6">Sábado</label><label><input type="checkbox" name="diasEntrega" value="7">Domingo</label></fieldset><p class="ajuda">Marque os dias em que o fornecedor entrega. Sem seleção, não há previsão de entrega.</p><p id="erro-entregas" class="critico" role="alert" hidden></p><div class="acoes"><button type="button" class="secundario" id="cancelar-entregas">Cancelar</button><button type="submit">Salvar entregas</button></div></form></dialog></body></html>
