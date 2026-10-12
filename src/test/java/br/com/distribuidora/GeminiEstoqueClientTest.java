@@ -20,7 +20,7 @@ class GeminiEstoqueClientTest {
     private static final String URL = BASE + "/models/gemini-3.5-flash-lite:generateContent";
     private final ContextoEstoqueService.Contexto contexto = new ContextoEstoqueService.Contexto(
         "2026-10-11T23:00:00Z", "2026-09-12", 30, null,
-        List.of(new ContextoEstoqueService.Item(1L, "Refrigerante", "UN", 32, 10, 3, 7,
+        List.of(new ContextoEstoqueService.Item(1L, "Refrigerante", "UN", null, null, 32, 10, 3, 7,
             List.of(new ContextoEstoqueService.Dia("2026-10-11", 40, 8)))), List.of());
     private final PerguntaEstoque pergunta = new PerguntaEstoque("Quanto saiu?", 30, List.of());
 

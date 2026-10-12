@@ -48,6 +48,31 @@ class ExclusaoEstoqueTest {
         return p;
     }
 
+    @Test void cadastrarEEditarPrecosPreservaSaldoEHistorico() throws Exception {
+        var resposta=mvc.perform(post("/api/produtos").with(user("Administrador").roles("ADMIN")).with(csrf())
+            .contentType("application/json").content("{\"nome\":\"Com preços\",\"precoCusto\":4.19,\"precoVenda\":8.00}"))
+            .andExpect(status().isCreated()).andReturn();
+        Long id=new com.fasterxml.jackson.databind.ObjectMapper().readTree(resposta.getResponse().getContentAsString()).get("id").asLong();
+        assertEquals(0,new java.math.BigDecimal("4.19").compareTo(produtos.findById(id).orElseThrow().precoCusto));
+        estoque.movimentar(id,Movimentacao.Tipo.ENTRADA,12);
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/produtos/"+id+"/precos")
+            .with(user("Administrador").roles("ADMIN")).with(csrf()).contentType("application/json")
+            .content("{\"precoCusto\":5.50,\"precoVenda\":9.90}")).andExpect(status().isOk());
+        var p=produtos.findById(id).orElseThrow();
+        assertEquals(12,p.saldo); assertEquals(1,movimentacoes.count());
+        assertEquals(0,new java.math.BigDecimal("9.90").compareTo(p.precoVenda));
+        assertEquals(0,new java.math.BigDecimal("5.50").compareTo(contextoIa.consultar(30).produtos().get(0).precoCusto()));
+    }
+    @Test void precosInvalidosSaoRejeitadosESemPrecoContinuaDesconhecido() throws Exception {
+        Produto p=criar("Sem preço"); assertNull(p.precoCusto); assertNull(p.precoVenda);
+        for(String valor:java.util.List.of("-1","1.234","1000000000000")) {
+            mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/produtos/"+p.id+"/precos")
+                .with(user("Administrador").roles("ADMIN")).with(csrf()).contentType("application/json")
+                .content("{\"precoCusto\":"+valor+",\"precoVenda\":8}")).andExpect(status().isBadRequest());
+        }
+        assertNull(produtos.findById(p.id).orElseThrow().precoCusto);
+    }
+
     @Test void apagarUmProdutoRemoveSeuHistoricoEPreservaOutro() throws Exception {
         Produto primeiro = criar("Primeiro");
         Produto outro = criar("Outro");

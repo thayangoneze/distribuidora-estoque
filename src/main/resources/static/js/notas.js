@@ -36,8 +36,10 @@ function adicionarLinhaNota(item = {}) {
   tdEntrada.append(campoNota('quantidade-estoque-nota', 'Quantidade de entrada', null, 'number', { required: '', min: '1', max: '100000000', step: '1' }), unidade);
   const tdPreco = document.createElement('td');
   tdPreco.append(campoNota('preco-nota', 'Preço original unitário', item.valorUnitarioNota, 'number', { min: '0', step: '0.000001', placeholder: 'Não informado' }));
+  const custo = document.createElement('p'); custo.className = 'ajuda'; tdPreco.append(custo);
   const tdParametros = document.createElement('td');
   tdParametros.append(campoNota('seguranca-nota', 'Estoque de segurança', 10, 'number', { min: '0', step: '1', required: '' }), campoNota('prazo-nota', 'Entrega (dias)', 3, 'number', { min: '0', step: '1', required: '' }), campoNota('cobertura-nota', 'Cobertura (dias)', 7, 'number', { min: '0', step: '1', required: '' }));
+  tdParametros.append(campoNota('venda-nota', 'Preço de venda (R$/unidade de estoque)', null, 'number', { min: '0', max: '999999999999.99', step: '0.01', placeholder: 'Não informado' }));
   const tdRemover = document.createElement('td');
   const remover = document.createElement('button'); remover.type = 'button'; remover.className = 'perigo'; remover.textContent = 'Remover';
   remover.addEventListener('click', () => { if (!notaOcupada) linha.remove(); });
@@ -47,10 +49,19 @@ function adicionarLinhaNota(item = {}) {
   const quantidadeOriginal = linha.querySelector('.quantidade-original');
   const unidadeOriginal = linha.querySelector('.unidade-original');
   const quantidade = linha.querySelector('.quantidade-estoque-nota');
+  function mostrarCusto() {
+    const preco = numeroNota(linha.querySelector('.preco-nota'));
+    const original = numeroNota(quantidadeOriginal); const entrada = numeroNota(quantidade);
+    custo.textContent = preco != null && original > 0 && entrada > 0
+      ? `Custo estimado: ${moeda(preco * original / entrada)} por ${unidade.value}. Substituirá o último custo ao confirmar.`
+      : 'Custo não calculado: informe preço, quantidade da nota e quantidade de entrada.';
+  }
+  linha.addEventListener('input', mostrarCusto);
   function sugerirQuantidade() {
     const unidadeLida = unidadeOriginal.value.trim().toUpperCase();
     const q = numeroNota(quantidadeOriginal);
     quantidade.value = unidadeLida === unidade.value && Number.isInteger(q) && q > 0 ? q : '';
+    mostrarCusto();
   }
   function ajustarVinculo() {
     const existente = produtosNota.find(p => String(p.id) === vinculo.value);
@@ -110,7 +121,7 @@ $('#form-revisao-nota').addEventListener('submit', async evento => {
       nome: c('.nome-item-nota').value.trim(), unidadeEstoque: c('.unidade-estoque-nota').value,
       quantidadeEstoque: Number(c('.quantidade-estoque-nota').value), quantidadeNota: numeroNota(c('.quantidade-original')),
       unidadeNota: c('.unidade-original').value.trim() || null, valorUnitarioNota: numeroNota(c('.preco-nota')),
-      estoqueSeguranca: Number(c('.seguranca-nota').value), prazoEntregaDias: Number(c('.prazo-nota').value), coberturaDesejadaDias: Number(c('.cobertura-nota').value) };
+      estoqueSeguranca: Number(c('.seguranca-nota').value), prazoEntregaDias: Number(c('.prazo-nota').value), coberturaDesejadaDias: Number(c('.cobertura-nota').value), precoVenda: c('.vinculo-nota').value ? null : numeroNota(c('.venda-nota')) };
   });
   const dados = { fornecedor: $('#fornecedor-nota').value.trim() || null, numeroNota: $('#numero-nota').value.trim() || null,
     dataEmissao: $('#data-nota').value || null, revisado: $('#revisado-nota').checked, itens };

@@ -18,7 +18,7 @@ public class ContextoEstoqueService {
         this.produtos = produtos; this.movimentacoes = movimentacoes; this.estoque = estoque;
     }
     public record Dia(String data, long entradas, long saidas) {}
-    public record Item(Long id, String nome, String unidadeEstoque, int saldo, int estoqueSeguranca, int prazoEntregaDias,
+    public record Item(Long id, String nome, String unidadeEstoque, java.math.BigDecimal precoCusto, java.math.BigDecimal precoVenda, int saldo, int estoqueSeguranca, int prazoEntregaDias,
                        int coberturaDesejadaDias, List<Dia> movimentacoesDiarias) {}
     public record Contexto(String atualizadoEm, String inicioPeriodo, int periodoDias,
                            Instant primeiraMovimentacaoRegistrada, List<Item> produtos,
@@ -41,7 +41,7 @@ public class ContextoEstoqueService {
         List<Item> itens = lista.stream().sorted(Comparator.comparing(p -> p.id)).map(p -> {
             var diarios = totais.getOrDefault(p.id, Map.of()).entrySet().stream()
                 .map(e -> new Dia(e.getKey().toString(), e.getValue()[0], e.getValue()[1])).toList();
-            return new Item(p.id, p.nome, p.unidadeEstoque == null ? "UN" : p.unidadeEstoque, p.saldo, p.estoqueSeguranca, p.prazoEntregaDias, p.coberturaDesejadaDias, diarios);
+            return new Item(p.id, p.nome, p.unidadeEstoque == null ? "UN" : p.unidadeEstoque, p.precoCusto, p.precoVenda, p.saldo, p.estoqueSeguranca, p.prazoEntregaDias, p.coberturaDesejadaDias, diarios);
         }).toList();
         return new Contexto(agora.toString(), primeiroDia.toString(), dias,
             movimentacoes.primeiraMovimentacao(), itens, estoque.sugestoes(30));

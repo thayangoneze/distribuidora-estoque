@@ -1,6 +1,7 @@
 package br.com.distribuidora.controller;
 
 import br.com.distribuidora.dto.NovaMovimentacao;
+import br.com.distribuidora.dto.PrecosProduto;
 import br.com.distribuidora.dto.ConfirmacaoLimpeza;
 import br.com.distribuidora.dto.Sugestao;
 import br.com.distribuidora.model.Produto;
@@ -28,6 +29,10 @@ public class EstoqueController {
         return produtos.save(produto);
     }
     @GetMapping("/produtos") public List<Produto> listar() { return produtos.findAll(); }
+    @PutMapping("/produtos/{id}/precos")
+    public Produto atualizarPrecos(@PathVariable Long id, @Valid @RequestBody PrecosProduto dados) {
+        return estoque.atualizarPrecos(id, dados);
+    }
     @DeleteMapping("/produtos/{id}") @ResponseStatus(HttpStatus.NO_CONTENT)
     public void apagar(@PathVariable Long id) { estoque.apagarProduto(id); }
     @DeleteMapping("/produtos") @ResponseStatus(HttpStatus.NO_CONTENT)

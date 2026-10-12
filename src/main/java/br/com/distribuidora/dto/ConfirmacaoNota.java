@@ -14,5 +14,6 @@ public record ConfirmacaoNota(@Size(max=255) String fornecedor, @Size(max=100) S
         @DecimalMin(value="0",inclusive=false) @Digits(integer=9,fraction=4) BigDecimal quantidadeNota,
         @Size(max=32) String unidadeNota,
         @DecimalMin("0") @Digits(integer=12,fraction=6) BigDecimal valorUnitarioNota,
-        @Min(0) int estoqueSeguranca, @Min(0) int prazoEntregaDias, @Min(0) int coberturaDesejadaDias) {}
+        @Min(0) int estoqueSeguranca, @Min(0) int prazoEntregaDias, @Min(0) int coberturaDesejadaDias,
+        @DecimalMin("0") @Digits(integer=12,fraction=2) BigDecimal precoVenda) {}
 }

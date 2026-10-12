@@ -1,6 +1,7 @@
 package br.com.distribuidora.service;
 
 import br.com.distribuidora.dto.Sugestao;
+import br.com.distribuidora.dto.PrecosProduto;
 import br.com.distribuidora.model.Movimentacao;
 import br.com.distribuidora.model.Produto;
 import br.com.distribuidora.repository.MovimentacaoRepository;
@@ -20,6 +21,14 @@ public class EstoqueService {
     private final MovimentacaoRepository movimentacoes;
     public EstoqueService(ProdutoRepository produtos, MovimentacaoRepository movimentacoes) {
         this.produtos = produtos; this.movimentacoes = movimentacoes;
+    }
+    @Transactional
+    public Produto atualizarPrecos(Long id, PrecosProduto dados) {
+        Produto produto = produtos.buscarParaAtualizar(id).orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto não encontrado"));
+        produto.precoCusto = dados.precoCusto();
+        produto.precoVenda = dados.precoVenda();
+        return produtos.save(produto);
     }
     @Transactional
     public void apagarProduto(Long id) {

@@ -58,7 +58,7 @@ class ImportacaoNotaTest {
         return new MockMultipartFile("arquivo","nota.png","image/png",new byte[]{(byte)0x89,'P','N','G',13,10,26,10,0});
     }
     ConfirmacaoNota.Item item(Long id,String nome,String unidade,int quantidade) {
-        return new ConfirmacaoNota.Item(id,nome,unidade,quantidade,new BigDecimal("10"),"CX",new BigDecimal("50.25"),10,3,7);
+        return new ConfirmacaoNota.Item(id,nome,unidade,quantidade,new BigDecimal("10"),"CX",new BigDecimal("50.25"),10,3,7,new BigDecimal("8.00"));
     }
     ConfirmacaoNota confirmacao(ConfirmacaoNota.Item... itens) {
         return new ConfirmacaoNota("Fornecedor","10","2026-10-12",true,List.of(itens));
@@ -73,6 +73,8 @@ class ImportacaoNotaTest {
         var r=service.analisar(arquivo());
         service.confirmar(r.importacaoId(),confirmacao(item(null,"Refrigerante 2 L","UN",120)));
         var p=produtos.findAll().get(0); assertEquals(120,p.saldo); assertEquals("UN",p.unidadeEstoque);
+        assertEquals(0,new BigDecimal("4.19").compareTo(p.precoCusto));
+        assertEquals(0,new BigDecimal("8.00").compareTo(p.precoVenda));
         var m=movimentos.findAll().get(0); assertEquals(120,m.quantidade);
         assertEquals(0,new BigDecimal("50.25").compareTo(m.valorUnitarioNota));
         assertEquals("CX",m.unidadeNota); assertEquals(0,new BigDecimal("10").compareTo(m.quantidadeNota));
@@ -82,9 +84,19 @@ class ImportacaoNotaTest {
         assertEquals(1,movimentos.count());
     }
     @Test void produtoExistenteRecebeEntradaSemNovoCadastro() {
-        Produto p=new Produto(); p.nome="Refrigerante 2 L"; p.saldo=8; p.unidadeEstoque="CX"; p=produtos.save(p);
+        Produto p=new Produto(); p.nome="Refrigerante 2 L"; p.saldo=8; p.unidadeEstoque="CX"; p.precoVenda=new BigDecimal("70.00"); p=produtos.save(p);
         var r=service.analisar(arquivo());service.confirmar(r.importacaoId(),confirmacao(item(p.id,p.nome,"CX",10)));
         assertEquals(1,produtos.count()); assertEquals(18,produtos.findById(p.id).orElseThrow().saldo);
+        assertEquals(0,new BigDecimal("70.00").compareTo(produtos.findById(p.id).orElseThrow().precoVenda));
+        assertEquals(0,new BigDecimal("50.25").compareTo(produtos.findById(p.id).orElseThrow().precoCusto));
+    }
+    @Test void notaSemPrecoPreservaCustoExistente() {
+        Produto p=new Produto(); p.nome="Já cadastrado"; p.precoCusto=new BigDecimal("6.50"); p=produtos.save(p);
+        var r=service.analisar(arquivo());
+        var item=new ConfirmacaoNota.Item(p.id,p.nome,"UN",12,null,null,null,0,0,0,null);
+        service.confirmar(r.importacaoId(),confirmacao(item));
+        assertEquals(0,new BigDecimal("6.50").compareTo(produtos.findById(p.id).orElseThrow().precoCusto));
+        assertNull(produtos.findById(p.id).orElseThrow().precoVenda);
     }
     @Test void falhaEmItemPosteriorReverteTudoIncluindoProdutoNovo() {
         var r=service.analisar(arquivo());

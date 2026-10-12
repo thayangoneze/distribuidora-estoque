@@ -1,5 +1,6 @@
 package br.com.distribuidora.model;
 
+import java.math.BigDecimal;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 
@@ -12,5 +13,9 @@ public class Produto {
     @Min(0) @Column(nullable = false) public int estoqueSeguranca;
     @Min(0) @Column(nullable = false) public int prazoEntregaDias;
     @Min(0) @Column(nullable = false) public int coberturaDesejadaDias;
+    @DecimalMin("0") @Digits(integer=12, fraction=2)
+    @Column(precision=14, scale=2) public BigDecimal precoCusto;
+    @DecimalMin("0") @Digits(integer=12, fraction=2)
+    @Column(precision=14, scale=2) public BigDecimal precoVenda;
     @Version public Long versao;
 }

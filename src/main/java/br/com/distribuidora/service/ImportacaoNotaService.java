@@ -12,6 +12,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 import java.time.*;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.MessageDigest;
 import java.util.*;
 
@@ -89,6 +91,7 @@ public class ImportacaoNotaService {
                     produto=new Produto(); produto.nome=nome; produto.unidadeEstoque=item.unidadeEstoque();
                     produto.estoqueSeguranca=item.estoqueSeguranca(); produto.prazoEntregaDias=item.prazoEntregaDias();
                     produto.coberturaDesejadaDias=item.coberturaDesejadaDias();
+                    produto.precoVenda=item.precoVenda();
                     produto=produtos.save(produto); novos.put(nomeNormalizado,produto);
                 }
             }
@@ -97,6 +100,13 @@ public class ImportacaoNotaService {
                 "A quantidade deve estar na unidade de estoque do produto: "+produto.nome+" ("+unidade+").");
             if((long)produto.saldo+item.quantidadeEstoque()>Integer.MAX_VALUE)
                 throw falha(HttpStatus.BAD_REQUEST,"A quantidade excede o limite de saldo permitido.");
+            if(item.valorUnitarioNota()!=null && item.quantidadeNota()!=null) {
+                BigDecimal custo=item.valorUnitarioNota().multiply(item.quantidadeNota())
+                    .divide(BigDecimal.valueOf(item.quantidadeEstoque()),2,RoundingMode.HALF_UP);
+                if(custo.compareTo(new BigDecimal("999999999999.99"))>0)
+                    throw falha(HttpStatus.BAD_REQUEST,"O custo calculado excede o limite permitido. Confira quantidades e preço.");
+                produto.precoCusto=custo;
+            }
             produto.saldo+=item.quantidadeEstoque();
             Movimentacao movimento=new Movimentacao(produto,Movimentacao.Tipo.ENTRADA,item.quantidadeEstoque());
             movimento.importacaoNota=nota; movimento.valorUnitarioNota=item.valorUnitarioNota();

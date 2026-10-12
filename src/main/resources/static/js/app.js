@@ -29,6 +29,7 @@ async function requisitar(url, options) {
   }
   return resposta.status === 204 ? null : resposta.json();
 }
+const moeda = valor => valor == null ? 'Não informado' : Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 function celula(linha, valor, classe) {
   const td = document.createElement('td');
   td.textContent = valor;
@@ -68,6 +69,8 @@ async function atualizar() {
       const critico = p.saldo <= p.estoqueSeguranca;
       celula(linha, p.nome);
       celula(linha, `${p.saldo} ${p.unidadeEstoque || 'UN'}`, critico ? 'critico' : '');
+      celula(linha, moeda(p.precoCusto));
+      celula(linha, moeda(p.precoVenda));
       celula(linha, p.estoqueSeguranca);
       selo(linha, critico ? 'Estoque crítico' : 'Normal', critico ? 'alerta' : '');
       const acoes = document.createElement('td');
@@ -85,13 +88,17 @@ async function atualizar() {
           await atualizar();
         } catch (erro) { avisar(erro.message, true); apagar.disabled = false; }
       });
-      acoes.append(apagar);
+      const precos = document.createElement('button');
+      precos.type = 'button'; precos.className = 'secundario'; precos.textContent = 'Preços';
+      precos.setAttribute('aria-label', `Editar preços de ${p.nome}`);
+      precos.addEventListener('click', () => abrirPrecos(p));
+      acoes.append(precos, apagar);
       linha.append(acoes);
       lista.append(linha);
     });
     seletor.value = selecionado;
     $('#limpar-estoque').disabled = !produtos.length;
-    if (!produtos.length) vazio(lista, 5, 'Nenhum produto cadastrado.');
+    if (!produtos.length) vazio(lista, 7, 'Nenhum produto cadastrado.');
     const reposicao = $('#lista-reposicao');
     reposicao.replaceChildren();
     sugestoes.forEach(s => {
@@ -112,6 +119,7 @@ $('#form-produto').addEventListener('submit', async evento => {
   const form = evento.currentTarget;
   const dados = Object.fromEntries(new FormData(form));
   for (const campo of ['estoqueSeguranca', 'prazoEntregaDias', 'coberturaDesejadaDias']) dados[campo] = Number(dados[campo]);
+  for (const campo of ['precoCusto', 'precoVenda']) dados[campo] = dados[campo] === '' ? null : Number(dados[campo]);
   try {
     await requisitar('/api/produtos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
     form.reset();
@@ -163,6 +171,30 @@ $('#form-limpeza').addEventListener('submit', async evento => {
     $('#erro-limpeza').textContent = erro.message;
     $('#erro-limpeza').hidden = false;
   } finally { botao.disabled = false; }
+});
+const dialogPrecos = $('#dialog-precos');
+let produtoPrecosId;
+function abrirPrecos(produto) {
+  produtoPrecosId = produto.id;
+  $('#produto-precos').textContent = `${produto.nome} — preços por ${produto.unidadeEstoque || 'UN'}`;
+  const form = $('#form-precos');
+  form.elements.precoCusto.value = produto.precoCusto ?? '';
+  form.elements.precoVenda.value = produto.precoVenda ?? '';
+  $('#erro-precos').hidden = true;
+  dialogPrecos.showModal(); form.elements.precoCusto.focus();
+}
+$('#cancelar-precos').addEventListener('click', () => dialogPrecos.close());
+$('#form-precos').addEventListener('submit', async evento => {
+  evento.preventDefault();
+  const form = evento.currentTarget;
+  const botao = form.querySelector('button[type="submit"]'); botao.disabled = true;
+  const dados = {};
+  for (const campo of ['precoCusto', 'precoVenda']) dados[campo] = form.elements[campo].value === '' ? null : Number(form.elements[campo].value);
+  try {
+    await requisitar(`/api/produtos/${produtoPrecosId}/precos`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
+    dialogPrecos.close(); avisar('Preços atualizados.'); await atualizar();
+  } catch (erro) { $('#erro-precos').textContent = erro.message; $('#erro-precos').hidden = false; }
+  finally { botao.disabled = false; }
 });
 atualizar();
 
