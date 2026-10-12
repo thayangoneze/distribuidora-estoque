@@ -12,7 +12,7 @@ public class IaConfig {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(10000);
         factory.setReadTimeout(45000);
-        return RestClient.builder().baseUrl("https://api.openai.com/v1")
+        return RestClient.builder().baseUrl("https://generativelanguage.googleapis.com/v1beta")
             .requestFactory(factory).build();
     }
 }

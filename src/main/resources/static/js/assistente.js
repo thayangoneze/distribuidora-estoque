@@ -18,7 +18,7 @@ async function verificarIa() {
   try {
     const estado = await requisitar('/api/assistente/status');
     iaDisponivel = estado.configurado;
-    $('#status-ia').textContent = iaDisponivel ? 'Integração configurada. Cada pergunta consulta os dados atuais do estoque.' : 'A IA ainda não foi ativada. O administrador precisa configurar a integração.';
+    $('#status-ia').textContent = iaDisponivel ? 'Gemini configurado. Cada pergunta consulta os dados atuais do estoque.' : 'A IA ainda não foi ativada. O administrador precisa configurar a integração.';
     $('#enviar-ia').disabled = !iaDisponivel;
   } catch (erro) { $('#status-ia').textContent = erro.message; }
 }

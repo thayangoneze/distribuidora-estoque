@@ -50,7 +50,7 @@ Para baixar a organização no computador, com a aplicação parada e a branch `
 
 ## Apagar produtos e limpar estoque
 
-O botão **Apagar** de cada linha exclui o produto e seu histórico de movimentações após confirmação. **Limpar todo o estoque** apaga todos os produtos e seus históricos; exige a senha do administrador para confirmar (provisoriamente `123456`). Essas operações são permanentes e não significam apenas zerar os saldos.
+O botão **Apagar** de cada linha exclui o produto e seu histórico de movimentações após confirmação. **Limpar todo o estoque** apaga todos os produtos e seus históricos; exige a senha do administrador para confirmar usando a senha definida no servidor. Essas operações são permanentes e não significam apenas zerar os saldos.
 
 API: `DELETE /api/produtos/{id}` apaga um produto (404 se inexistente); `DELETE /api/produtos` limpa o estoque, recebendo JSON com o campo `senha`; uma senha incorreta retorna HTTP 403. Configure outra senha pelo ambiente `ADMIN_DELETE_PASSWORD`. Sucesso retorna HTTP 204 sem conteúdo. O histórico é removido antes dos produtos, na mesma transação. Os testes de integração usam exclusivamente H2 em memória: `mvn clean test`.
 
@@ -60,27 +60,32 @@ O painel utiliza preto, branco e tons de cinza, com cartões e campos arredondad
 
 ## Login
 
-Ao abrir o painel, entre como **Administrador** com a senha provisória **123456**. A autenticação por sessão protege a interface e a API; o botão **Sair** encerra a sessão. A senha é configurada pelo ambiente `ADMIN_DELETE_PASSWORD` e também é utilizada na confirmação de limpeza completa do estoque.
+Ao abrir o painel, entre como **Administrador** com a senha definida no servidor. A autenticação por sessão protege a interface e a API; o botão **Sair** encerra a sessão. A senha é configurada pelo ambiente `ADMIN_DELETE_PASSWORD` e também é utilizada na confirmação de limpeza completa do estoque.
 
 Requisições de alteração exigem um token CSRF. A interface o obtém automaticamente em `GET /csrf`. Para clientes de API, faça login com cookies de sessão e envie o token no cabeçalho indicado pela resposta de `/csrf`.
 
-## Assistente de estoque com IA
+## Assistente de estoque com Gemini
 
-A seção **Assistente de estoque** permite perguntar sobre saldos, entradas, saídas e reposição. O servidor consulta o PostgreSQL a cada pergunta e envia um resumo dos produtos e das movimentações diárias do período à API Responses da OpenAI. A chave permanece no servidor. O modelo padrão é `gpt-4.1-mini`, configurável por `OPENAI_MODEL`.
+A seção **Assistente de estoque** permite perguntar sobre saldos, entradas, saídas e reposição. O servidor consulta o PostgreSQL a cada pergunta e envia um resumo dos produtos e das movimentações diárias à API Gemini (`generateContent`). A chave permanece no servidor e é enviada pelo cabeçalho `x-goog-api-key`.
 
-Para ativar, pare o sistema e configure no mesmo terminal PowerShell, além da conexão com o banco e da porta:
+O modelo padrão é `gemini-3.5-flash-lite`, configurável por `GEMINI_MODEL`. Crie uma chave para o seu projeto no Google AI Studio: https://aistudio.google.com/apikey . Consulte a disponibilidade, os limites e os termos do plano da sua conta; não há garantia de acesso gratuito ilimitado. A faixa gratuita pode utilizar os dados enviados para melhorar os produtos da Google, conforme os termos do provedor.
+
+Para ativar, pare o sistema, atualize a branch e configure no mesmo terminal PowerShell, mantendo também as variáveis do PostgreSQL e a porta:
 
 ```powershell
-$env:OPENAI_API_KEY = 'SUA_CHAVE_DA_API'
+git pull
+$env:GEMINI_API_KEY = 'SUA_CHAVE_DO_GEMINI'
 mvn clean spring-boot:run
 ```
 
-Não grave a chave no código ou no GitHub. Sem uma chave, o sistema continua funcionando e informa que a integração de IA precisa ser ativada. A integração requer acesso à API OpenAI; uma sessão no ChatGPT não configura automaticamente essa chave. O uso do provedor é cobrado conforme sua conta de API.
+A variável `OPENAI_API_KEY` não é mais utilizada. Não grave chaves no código nem no GitHub. Sem a chave Gemini, o sistema continua funcionando e o assistente informa que a integração precisa ser ativada. Para outro modelo disponível na sua conta, configure `GEMINI_MODEL` antes de iniciar.
 
-A consulta considera datas no fuso America/Sao_Paulo e aceita períodos de 1 a 90 dias (a tela oferece 30/60/90). O contexto inclui saldos, histórico diário, primeira movimentação registrada e as sugestões calculadas de 30 dias. Saídas podem representar vendas ou perdas; não há dados de faturamento, preços ou pedidos pendentes nesta etapa. A IA deve explicar essa limitação e não inventar números. As recomendações devem ser revisadas pelo gestor.
+A consulta considera o fuso America/Sao_Paulo e períodos de 1 a 90 dias (a tela oferece 30/60/90). O contexto inclui saldos, histórico diário, primeira movimentação registrada e sugestões calculadas de 30 dias. Saídas podem representar vendas ou perdas; não há dados de faturamento, preços ou pedidos pendentes nesta etapa. Recomendações precisam ser revisadas pelo gestor.
 
-Esta etapa é de consulta: a IA não executa SQL e não altera o banco. O histórico da conversa fica apenas na memória da página, limitado às últimas oito mensagens por requisição; mudar o período inicia nova conversa. Os dados enviados são somente do estoque, sem credenciais de acesso. O limite inicial é 500 produtos e 240 mil caracteres de contexto; limites excedidos geram uma mensagem, sem truncar silenciosamente o catálogo. As chamadas usam `store=false`.
+A IA consulta informações e não executa SQL nem altera o banco. O histórico fica na memória da página, limitado às últimas oito mensagens por requisição; mudar o período inicia nova conversa. Nenhuma credencial de acesso ao sistema é enviada ao modelo. Há limite de 500 produtos e 240 mil caracteres de contexto, explicitado por erro em vez de truncamento silencioso.
 
-Rotas protegidas: `GET /api/assistente/status` informa se a chave foi configurada (não comprova que ela é válida); `POST /api/assistente/perguntas` recebe `pergunta`, `periodoDias` e `historico` opcional, exigindo sessão e CSRF.
+Rotas protegidas: `GET /api/assistente/status` informa se há uma chave configurada (não comprova sua validade); `POST /api/assistente/perguntas` recebe `pergunta`, `periodoDias` e `historico` opcional, exigindo sessão e CSRF.
 
-Testes de integração com H2 validam a leitura do contexto sem alterar registros, acesso autenticado e validação. Testes HTTP simulam respostas e erros do provedor, sem chamadas pagas. O teste ao vivo requer configurar uma chave real. Leitura de notas por imagem e modelo treinado de previsão de demanda ainda não estão implementados.
+Falhas do Gemini são apresentadas sem expor o corpo bruto do erro ou a chave: limite diário/requisições (429), configuração/permissão (400/401/403) e modelo indisponível (404). Respostas incompletas, bloqueadas ou sem texto não são apresentadas como concluídas; partes de pensamento interno são descartadas.
+
+Testes com H2 validam consulta ao contexto e acesso autenticado; testes HTTP simulam o Gemini sem chamadas reais. Leitura de notas por imagem e modelo treinado de previsão de demanda ainda não estão implementados.

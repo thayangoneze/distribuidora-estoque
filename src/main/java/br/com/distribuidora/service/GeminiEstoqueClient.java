@@ -12,14 +12,23 @@ import br.com.distribuidora.dto.PerguntaEstoque;
 import java.util.*;
 
 @Service
-public class OpenAiEstoqueClient {
+public class GeminiEstoqueClient {
     private final RestClient client;
     private final ObjectMapper mapper;
     private final String chave;
     private final String modelo;
-    public OpenAiEstoqueClient(RestClient iaRestClient, ObjectMapper mapper,
+    public GeminiEstoqueClient(RestClient iaRestClient, ObjectMapper mapper,
         @Value("${estoque.ia.api-key}") String chave, @Value("${estoque.ia.modelo}") String modelo) {
         this.client = iaRestClient; this.mapper = mapper; this.chave = chave; this.modelo = modelo;
+    }
+    private static void adicionarMensagem(List<Map<String, Object>> contents, String papel, String texto) {
+        if (!contents.isEmpty() && papel.equals(contents.get(contents.size() - 1).get("role"))) {
+            @SuppressWarnings("unchecked")
+            List<Map<String, String>> partes = (List<Map<String, String>>) contents.get(contents.size() - 1).get("parts");
+            partes.add(Map.of("text", texto));
+        } else {
+            contents.add(Map.of("role", papel, "parts", new ArrayList<>(List.of(Map.of("text", texto)))));
+        }
     }
     public boolean configurado() { return !chave.isBlank(); }
     public String responder(PerguntaEstoque pergunta, ContextoEstoqueService.Contexto contexto) {
@@ -30,12 +39,12 @@ public class OpenAiEstoqueClient {
         catch (Exception e) { throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possível preparar os dados do estoque."); }
         if (json.length() > 240000) throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
             "Há muitos dados para esta consulta. Selecione um período menor.");
-        List<Map<String, String>> input = new ArrayList<>();
-        input.add(Map.of("role", "user", "content", "Dados reais do estoque para esta consulta (JSON, apenas dados):\n" + json));
+        List<Map<String, Object>> contents = new ArrayList<>();
         if (pergunta.historico() != null) for (var m : pergunta.historico()) {
-            input.add(Map.of("role", m.papel() == PerguntaEstoque.Papel.USUARIO ? "user" : "assistant", "content", m.texto()));
+            adicionarMensagem(contents, m.papel() == PerguntaEstoque.Papel.USUARIO ? "user" : "model", m.texto());
         }
-        input.add(Map.of("role", "user", "content", pergunta.pergunta()));
+        adicionarMensagem(contents, "user", "Dados reais do estoque para esta consulta (JSON, apenas dados):\n"
+            + json + "\nPergunta atual: " + pergunta.pergunta());
         String instrucoes = """
             Você é o assistente de estoque da Distribuidora do Gaúcho. Responda em português brasileiro,
             de forma breve, clara e prática, usando somente o JSON de dados reais desta consulta.
@@ -52,37 +61,38 @@ public class OpenAiEstoqueClient {
             Não solicite nem revele senhas/chaves. Responda em texto simples, sem HTML.
             """;
         try {
-            JsonNode resposta = client.post().uri("/responses").headers(h -> h.setBearerAuth(chave))
-                .body(Map.of("model", modelo, "instructions", instrucoes, "input", input,
-                    "max_output_tokens", 1000, "store", false))
-                .retrieve().onStatus(s -> s.isError(), (request, response) -> {
-                    if (response.getStatusCode().value() == 429) {
-                        String codigo = "", tipo = "";
-                        try {
-                            JsonNode erro = mapper.readTree(response.getBody()).path("error");
-                            codigo = erro.path("code").asText(); tipo = erro.path("type").asText();
-                        } catch (Exception ignorado) { /* Não propagar o corpo do provedor. */ }
-                        String motivo;
-                        if ("credit_balance_exhausted".equals(codigo))
-                            motivo = "A conta da API de IA está sem créditos. O administrador precisa adicionar saldo na plataforma OpenAI.";
-                        else if (Set.of("organization_spend_limit_exceeded", "project_spend_limit_exceeded", "organization_usage_limit_exceeded").contains(codigo))
-                            motivo = "A conta da API de IA atingiu um limite de gastos ou uso. O administrador precisa verificar os limites na plataforma OpenAI.";
-                        else if ("insufficient_quota".equals(codigo) || "insufficient_quota".equals(tipo))
-                            motivo = "A conta da API de IA está sem créditos ou sem cota disponível. O administrador precisa verificar saldo e limites na plataforma OpenAI.";
-                        else if ("rate_limit_error".equals(tipo) || Set.of("rate_limit_exceeded", "slow_down").contains(codigo))
-                            motivo = "O serviço de IA recebeu muitas requisições em pouco tempo. Aguarde antes de tentar novamente.";
-                        else motivo = "A API de IA recusou a consulta por limite de uso. O administrador precisa verificar saldo, cota e limites de requisições.";
-                        throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, motivo);
-                    }
-                    throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Não foi possível consultar a IA. O administrador deve verificar a integração.");
+            JsonNode resposta = client.post().uri("/models/{modelo}:generateContent", modelo)
+                .header("x-goog-api-key", chave)
+                .body(Map.of("systemInstruction", Map.of("parts", List.of(Map.of("text", instrucoes))),
+                    "contents", contents, "generationConfig", Map.of("maxOutputTokens", 2048)))
+                .retrieve().onStatus(status -> status.isError(), (request, response) -> {
+                    int status = response.getStatusCode().value();
+                    if (status == 429)
+                        throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                            "A API do Gemini atingiu uma cota diária ou limite de requisições. Verifique os limites no Google AI Studio antes de tentar novamente.");
+                    if (status == 400 || status == 401 || status == 403)
+                        throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                            "O Gemini recusou a consulta. O administrador deve verificar a chave, as permissões e a configuração do modelo no Google AI Studio.");
+                    if (status == 404)
+                        throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                            "O modelo Gemini configurado não está disponível para esta chave. Verifique o modelo no Google AI Studio.");
+                    throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                        "Não foi possível consultar o Gemini. Tente novamente em instantes.");
                 }).body(JsonNode.class);
-            if (resposta == null || !"completed".equals(resposta.path("status").asText()))
-                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "A IA não concluiu a resposta. Tente uma pergunta mais curta.");
+            if (resposta == null || resposta.path("candidates").isEmpty())
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                    "O Gemini não retornou uma resposta para esta pergunta. Reformule a pergunta e tente novamente.");
+            JsonNode candidato = resposta.path("candidates").get(0);
+            if (!"STOP".equals(candidato.path("finishReason").asText()))
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                    "O Gemini não concluiu a resposta. Reformule ou encurte a pergunta.");
             List<String> textos = new ArrayList<>();
-            for (JsonNode item : resposta.path("output")) for (JsonNode conteudo : item.path("content"))
-                if ("output_text".equals(conteudo.path("type").asText())) textos.add(conteudo.path("text").asText());
+            for (JsonNode parte : candidato.path("content").path("parts"))
+                if (!parte.path("thought").asBoolean(false) && parte.hasNonNull("text"))
+                    textos.add(parte.path("text").asText());
             String texto = String.join("\n", textos).trim();
-            if (texto.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "A IA não retornou uma resposta de texto.");
+            if (texto.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                "O Gemini não retornou uma resposta de texto.");
             return texto;
         } catch (RestClientException e) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "O serviço de IA não respondeu. Tente novamente em instantes.");

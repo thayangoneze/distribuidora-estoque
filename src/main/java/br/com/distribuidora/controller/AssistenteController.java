@@ -10,8 +10,8 @@ import java.util.Map;
 @RequestMapping("/api/assistente")
 public class AssistenteController {
     private final ContextoEstoqueService contexto;
-    private final OpenAiEstoqueClient ia;
-    public AssistenteController(ContextoEstoqueService contexto, OpenAiEstoqueClient ia) { this.contexto = contexto; this.ia = ia; }
+    private final GeminiEstoqueClient ia;
+    public AssistenteController(ContextoEstoqueService contexto, GeminiEstoqueClient ia) { this.contexto = contexto; this.ia = ia; }
     @GetMapping("/status")
     public Map<String, Boolean> status() { return Map.of("configurado", ia.configurado()); }
     public record Resposta(String resposta, String atualizadoEm, int periodoDias) {}
