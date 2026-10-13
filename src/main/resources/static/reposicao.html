@@ -20,6 +20,6 @@
     <header class="topo"><span>GESTÃO <span class="barra">/</span> REPOSIÇÃO</span><span class="etiqueta-topo">Painel do gestor</span></header>
     <main class="container"><div id="mensagem" role="status" aria-live="polite" hidden></div><header class="cabecalho-pagina"><span class="sobretitulo escuro">GESTÃO DA DISTRIBUIDORA</span><h1>Reposição</h1></header><section class="painel tabela-painel" id="reposicao">
       <div class="titulo-linha"><div><span class="sobretitulo escuro">PLANEJAMENTO</span><h2>Sugestão de reposição</h2></div><label class="periodo">Analisar últimos <select id="periodo"><option value="30">30 dias</option><option value="60">60 dias</option><option value="90">90 dias</option></select></label></div>
-      <p class="ajuda">Itens sem saída nos últimos 60 dias são sinalizados e não entram na sugestão automática.</p>
-      <div class="rolagem"><table><thead><tr><th>Produto</th><th>Média/dia</th><th>Ponto de reposição</th><th>Quantidade sugerida</th><th>Observação</th></tr></thead><tbody id="lista-reposicao"></tbody></table></div>
+      <p class="ajuda">Esta lista mostra apenas produtos sem estoque ou com saldo igual ou abaixo do estoque de segurança. Itens sem saída nos últimos 60 dias continuam sinalizados como baixo giro, com compra automática não recomendada.</p>
+      <div class="rolagem"><table><thead><tr><th>Produto</th><th>Saldo</th><th>Média/dia</th><th>Ponto de reposição</th><th>Quantidade sugerida</th><th>Observação</th></tr></thead><tbody id="lista-reposicao"></tbody></table></div>
     </section><footer class="rodape-pagina">Distribuidora do Gaúcho <span>Controle de estoque e reposição</span></footer></main></div></body></html>

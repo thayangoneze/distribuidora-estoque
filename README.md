@@ -135,3 +135,5 @@ O resumo fica em `/visao-geral.html`; Estoque registra recebimentos e perdas/aju
 Basta iniciar o Spring Boot e abrir o endereço local. O sistema não depende de cloudflared, túnel externo ou acesso à câmera. Se houver um túnel aberto, encerre-o com Ctrl+C no terminal correspondente; mantenha o terminal da aplicação aberto. A senha já configurada permanece válida.
 
 O cadastro de produtos é individual. O cadastro em lote e os exemplos foram removidos da interface e da API. Produtos e saldos já cadastrados permanecem no banco.
+
+A página Reposição mostra apenas itens com saldo zerado ou igual ou abaixo do estoque de segurança, com os zerados primeiro e o saldo visível. Produtos em situação normal ficam fora dessa tabela. A consulta do assistente e os cálculos existentes continuam completos; itens críticos de baixo giro aparecem sinalizados, sem recomendação automática de compra.
