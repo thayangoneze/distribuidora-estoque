@@ -12,7 +12,6 @@ public class Produto {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) public Long id;
     @NotBlank @Column(nullable = false) public String nome;
     @Pattern(regexp="UN|CX|PCT") public String unidadeEstoque = "UN";
-    @Pattern(regexp="[0-9]{8,14}|^$") @Column(unique=true,length=14) public String codigoBarras;
     @Min(0) @Column(nullable = false) public int saldo;
     @Min(0) @Column(nullable = false) public int estoqueSeguranca;
     @JsonIgnore @Column(nullable = false) public int prazoEntregaDias;

@@ -124,32 +124,12 @@ O menu lateral abre páginas independentes: `/index.html` (Início), `/produtos.
 
 `app.js` contém sessão, CSRF e funções compartilhadas; cada página carrega seu próprio script. O assistente é inicializado somente em sua página; navegar para outra página encerra o histórico de conversa mantido em memória. Todas as páginas continuam protegidas pelo login. Não houve mudança nas tabelas ou nos dados.
 
-## Caixa com pagamento manual
+## Caixa manual
 
-A página inicial `/` ou `/index.html` é o Caixa. O resumo passou para `/visao-geral.html`. A página Estoque (`/movimentacoes.html`) registra recebimentos e perdas/ajustes; vendas devem ser realizadas no caixa.
+O Caixa fica na página inicial `/` ou `/index.html`. Busque o produto pelo nome, selecione, informe a quantidade e clique **Adicionar à venda**. Repita para outros produtos e ajuste quantidades ou remova itens no carrinho. Câmera, QR Code, conexão por celular, scanner e cadastro de códigos de barras foram removidos.
 
-Cadastre um código de barras opcional no produto (8 a 14 dígitos, preservando zeros iniciais). O botão **Código** permite preencher produtos existentes. Um código identifica um produto e não pode ser repetido. Códigos são da unidade de estoque: se o produto é uma caixa, ler o código adiciona uma caixa. Produtos precisam de preço de venda informado para entrar no carrinho; também podem ser buscados pelo nome.
+Informe desconto em reais, escolha dinheiro, Pix ou cartão e marque a confirmação de recebimento. Dinheiro exige valor recebido suficiente e calcula troco; Pix e cartão são registrados manualmente. Finalizar grava venda e baixa de estoque na mesma transação, verificando saldo e preço no servidor. Reenvio idêntico não duplica a baixa. O caixa apresenta as últimas 20 vendas e comprovante interno sem valor fiscal.
 
-Leitores USB no modo teclado podem preencher o campo **Código de barras**, normalmente com Enter ao final. Conecte o leitor, selecione esse campo e leia um código cadastrado. Cada leitura adiciona uma unidade, reunindo códigos repetidos no mesmo item. Se o leitor não enviar Enter, pressione Enter ou use o botão Adicionar pelo código. A compatibilidade com o equipamento físico deve ser verificada no computador do usuário; não há integração proprietária de scanner.
+O resumo fica em `/visao-geral.html`; Estoque registra recebimentos e perdas/ajustes. Produtos, preços, fornecedores, agendas, histórico de vendas e assistente foram preservados. Colunas antigas opcionais de código de barras podem permanecer no banco de desenvolvimento, mas não são usadas. Não é necessário apagar ou recriar o banco.
 
-O caixa permite quantidade, remoção, cancelamento antes do envio, desconto em reais e pagamento único por dinheiro, Pix ou cartão. Dinheiro exige valor recebido suficiente e calcula troco. Pix/cartão exigem confirmação manual do operador; a aplicação não cobra nem consulta bancos ou maquininhas. **Conferi e recebi o pagamento** é obrigatório.
-
-O servidor usa os preços cadastrados, verifica se mudaram desde a montagem do carrinho, bloqueia os produtos em ordem estável e valida saldo antes de registrar qualquer saída. Venda e baixa são atômicas. Identificador UUID estável e assinatura do pedido impedem repetição da mesma venda; reenvio idêntico retorna o registro salvo. Um envio pendente é mantido na sessão do navegador para reconciliação/reenvio após falha de conexão. Durante a pendência, o carrinho fica bloqueado. Limite de 100 produtos diferentes e 1 milhão de unidades por item; subtotal até R$ 999.999.999.999,99.
-
-O caixa mostra as últimas 20 vendas e permite visualizar comprovante interno sem valor fiscal. Os itens armazenam nomes, códigos, unidades e preços da venda; apagar produtos ou limpar estoque preserva as vendas já registradas. Esta etapa não implementa emissão fiscal, estorno de venda concluída, pagamentos divididos, impressão automática ou integração financeira.
-
-Rotas autenticadas: `POST /api/vendas` (pagamento confirmado e itens com preço esperado), `GET /api/vendas` (20 recentes), `PUT /api/produtos/{id}/codigo-barras`. Escritas protegidas por CSRF. Testes Java cobrem dinheiro/desconto/troco, Pix/cartão, atomicidade, reenvio, preço/saldo alterado, validação, código único e segurança. Testes DOM simulam leitura de código, carrinho, pagamento e recuperação de falha; não substituem teste físico do leitor.
-
-## Celular como leitor do caixa
-
-No Caixa, clique **Conectar celular** e informe o endereço base HTTPS do sistema. Gere o QR Code, abra-o pelo celular, faça login e toque **Ler próximo produto**. O leitor solicita somente câmera (preferindo a traseira); a decodificação ocorre no navegador com ZXing Browser 0.1.5, incluído localmente em `js/vendor` com licenças. Não envia fotos ou vídeo ao servidor nem usa Gemini. Há envio manual de código como alternativa.
-
-Cada captura envia um código por vez e pausa a câmera. O computador confirma se adicionou o produto ou se houve erro de cadastro, preço ou saldo. Reenvios mantêm o identificador da leitura; a confirmação do computador evita aplicar o mesmo evento duas vezes. Durante pagamento ou pendência de venda, leituras são recusadas para nova tentativa. A conexão termina ao concluir/cancelar a venda, ao desconectar ou após 30 minutos. Gerar novo QR invalida o anterior. Atualizar a página do caixa exige gerar nova conexão; reiniciar o servidor encerra todos os pareamentos.
-
-Caixa e celular precisam estar autenticados. A conexão tem UUID aleatório, é vinculada à sessão do computador e aceita uma sessão de celular. Endpoints de escrita usam CSRF. Canais e leituras são temporários em memória de uma única instância do servidor, com limites; não gravam movimentações nem alteram o banco diretamente. Uma conexão não pode controlar pagamento.
-
-Para desenvolvimento no Windows, use um endereço HTTPS já configurado ou instale `cloudflared` pela página oficial https://developers.cloudflare.com/tunnel/downloads/ . Antes de abrir o acesso externo, configure uma senha própria no ambiente `ADMIN_DELETE_PASSWORD` e reinicie o aplicativo. O endereço temporário publica o serviço pela internet e mantém o login da aplicação; não compartilhe a senha ou o QR Code.
-
-Com o Spring Boot rodando, abra **outro terminal** e execute `cloudflared tunnel --url http://localhost:8081`, ajustando à porta em uso. Copie o endereço HTTPS que ele mostrar. Abra esse endereço no computador, faça login e use-o no botão Conectar celular. Leia o QR Code no telefone e permita a câmera. Mantenha ambos os terminais abertos. Ao encerrar o cloudflared, o endereço deixa de funcionar. O endereço pode mudar no próximo início. O sistema reconhece cabeçalhos de proxy para preservar HTTPS no retorno do login.
-
-Referências: https://github.com/zxing-js/browser ; https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/ ; https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia . Câmera física e túnel do usuário ainda precisam de validação no dispositivo. Testes simulam o fluxo completo, retorno do login e falhas de confirmação/reenvio.
+Basta iniciar o Spring Boot e abrir o endereço local. O sistema não depende de cloudflared, túnel externo ou acesso à câmera. Se houver um túnel aberto, encerre-o com Ctrl+C no terminal correspondente; mantenha o terminal da aplicação aberto. A senha já configurada permanece válida.

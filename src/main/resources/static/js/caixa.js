@@ -26,7 +26,6 @@ function mostrarComprovante(venda) {
   $('#comprovante-venda').hidden=false;
 }
 function concluirVenda(venda) {
-  if(typeof encerrarCelular==='function')encerrarCelular();
   pendencia(null);carrinho.clear();$('#form-pagamento').reset();mostrarComprovante(venda);
   renderizarCarrinho();avisar(`Venda registrada. Troco: ${moeda(venda.troco)}.`);
 }
@@ -65,7 +64,7 @@ async function carregarCaixa() {
 }
 function adicionarCaixa(produto,quantidade=1) {
   if(ocupadoCaixa || envioPendente)return;
-  if(!produto)throw new Error('Código não encontrado. Cadastre-o na página Produtos.');
+  if(!produto)throw new Error('Selecione um produto.');
   if(produto.precoVenda==null)throw new Error(`Informe o preço de venda de ${produto.nome} na página Produtos.`);
   const atual=carrinho.get(produto.id);const total=(atual?.quantidade || 0)+quantidade;
   if(!Number.isInteger(total) || total<1 || total>1000000)throw new Error('Informe uma quantidade inteira válida.');
@@ -85,7 +84,7 @@ function renderizarCarrinho() {
     });td.append(qtd);tr.append(td);celula(tr,moeda((centavos(p.precoVenda)*item.quantidade)/100));
     const acoes=document.createElement('td');const remover=document.createElement('button');remover.type='button';remover.className='perigo';remover.textContent='Remover';remover.addEventListener('click',()=>{carrinho.delete(id);$('#confirmar-pagamento').checked=false;renderizarCarrinho();});acoes.append(remover);tr.append(acoes);tabela.append(tr);
   }
-  if(!carrinho.size)vazio(tabela,5,'Passe um produto no leitor para iniciar a venda.');
+  if(!carrinho.size)vazio(tabela,5,'Selecione um produto para iniciar a venda.');
   atualizarPagamento();bloquearCaixa();
 }
 function totaisCaixa() {
@@ -98,13 +97,8 @@ function atualizarPagamento() {
   $('#troco-caixa').textContent=moeda(Math.max(0,centavos($('#recebido-caixa').value || 0)-valores.total)/100);
   $('#orientacao-pagamento').textContent=dinheiro?'Confira o dinheiro recebido antes de finalizar.':$('#pagamento-caixa').value==='PIX'?'Confirme o Pix recebido no aplicativo bancário.':'Confirme a aprovação do cartão na maquininha.';
 }
-$('#form-scanner').addEventListener('submit',e=>{
-  e.preventDefault();const campo=$('#codigo-scanner');const codigo=campo.value.trim();
-  try{if(!codigo)throw new Error('Leia ou digite um código de barras.');adicionarCaixa(produtosCaixa.find(p=>p.codigoBarras===codigo));campo.value='';}
-  catch(erro){avisar(erro.message,true);campo.select();}campo.focus();
-});
 $('#form-busca-caixa').addEventListener('submit',e=>{
-  e.preventDefault();try{adicionarCaixa(produtosCaixa.find(p=>String(p.id)===$('#produto-caixa').value),Number($('#quantidade-caixa').value));$('#quantidade-caixa').value='1';$('#codigo-scanner').focus();}
+  e.preventDefault();try{adicionarCaixa(produtosCaixa.find(p=>String(p.id)===$('#produto-caixa').value),Number($('#quantidade-caixa').value));$('#quantidade-caixa').value='1';$('#busca-caixa').focus();}
   catch(erro){avisar(erro.message,true);}
 });
 $('#busca-caixa').addEventListener('input',renderizarBusca);
@@ -113,8 +107,7 @@ for(const id of ['desconto-caixa','recebido-caixa','pagamento-caixa'])$('#'+id).
 $('#cancelar-venda').addEventListener('click',()=>{
   if(ocupadoCaixa || envioPendente)return;
   if(carrinho.size && !confirm('Cancelar esta venda? O estoque ainda não foi alterado.'))return;
-  if(typeof encerrarCelular==='function')encerrarCelular();
-  carrinho.clear();$('#form-pagamento').reset();renderizarCarrinho();$('#codigo-scanner').focus();
+  carrinho.clear();$('#form-pagamento').reset();renderizarCarrinho();$('#busca-caixa').focus();
 });
 $('#form-pagamento').addEventListener('submit',async e=>{
   e.preventDefault();if(ocupadoCaixa)return;
@@ -133,6 +126,6 @@ $('#form-pagamento').addEventListener('submit',async e=>{
   }catch(erro){
     if(erro.status && [400,403,404,409,422].includes(erro.status))pendencia(null);
     avisar(envioPendente?`${erro.message} A venda pode ter sido registrada. Reenvie para confirmar sem repetir a baixa.`:erro.message,true);
-  }finally{ocupadoCaixa=false;bloquearCaixa();if(!envioPendente)$('#codigo-scanner').focus();}
+  }finally{ocupadoCaixa=false;bloquearCaixa();if(!envioPendente)$('#busca-caixa').focus();}
 });
 renderizarCarrinho();carregarCaixa();

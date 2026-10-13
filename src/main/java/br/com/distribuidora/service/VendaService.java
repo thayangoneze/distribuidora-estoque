@@ -42,7 +42,7 @@ public class VendaService {
             if(p.saldo<item.quantidade())throw erro(HttpStatus.CONFLICT,"Estoque insuficiente para "+p.nome+". Revise o carrinho.");
             if(p.precoVenda==null)throw erro(HttpStatus.CONFLICT,"Informe o preço de venda de "+p.nome+" na página Produtos.");
             if(p.precoVenda.compareTo(item.precoUnitario())!=0)throw erro(HttpStatus.CONFLICT,"O preço de "+p.nome+" mudou. Atualize os produtos e revise a venda.");
-            Venda.Item registro=new Venda.Item();registro.produtoId=p.id;registro.nome=p.nome;registro.codigoBarras=p.codigoBarras;
+            Venda.Item registro=new Venda.Item();registro.produtoId=p.id;registro.nome=p.nome;
             registro.unidade=p.unidadeEstoque==null?"UN":p.unidadeEstoque;registro.quantidade=item.quantidade();registro.precoUnitario=p.precoVenda;
             registro.subtotal=p.precoVenda.multiply(BigDecimal.valueOf(item.quantidade())).setScale(2);
             venda.itens.add(registro);venda.subtotal=venda.subtotal.add(registro.subtotal);

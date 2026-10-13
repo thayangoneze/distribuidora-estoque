@@ -27,7 +27,7 @@ public class SecurityConfig {
                 .requestMatchers("/login.html", "/js/login.js", "/css/**", "/csrf", "/error").permitAll()
                 .anyRequest().hasRole("ADMIN"))
             .formLogin(f -> f.loginPage("/login.html").loginProcessingUrl("/login")
-                .defaultSuccessUrl("/", false).failureUrl("/login.html?error").permitAll())
+                .defaultSuccessUrl("/", true).failureUrl("/login.html?error").permitAll())
             .logout(l -> l.logoutUrl("/logout").logoutSuccessUrl("/login.html?logout"))
             .exceptionHandling(e -> e.authenticationEntryPoint((request, response, exception) -> {
                 if (new AntPathRequestMatcher("/api/**").matches(request))

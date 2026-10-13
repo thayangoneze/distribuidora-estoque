@@ -28,10 +28,6 @@ public class EstoqueController {
         return estoque.criar(produto);
     }
     @GetMapping("/produtos") public List<Produto> listar() { return produtos.findAll(); }
-    @PutMapping("/produtos/{id}/codigo-barras")
-    public Produto codigo(@PathVariable Long id, @Valid @RequestBody br.com.distribuidora.dto.CodigoBarras dados) {
-        return estoque.atualizarCodigo(id,dados.codigoBarras());
-    }
     @PutMapping("/produtos/{id}/fornecedores")
     public Produto fornecedores(@PathVariable Long id, @Valid @RequestBody br.com.distribuidora.dto.FornecedoresProduto dados) {
         return estoque.atualizarFornecedores(id, dados.fornecedorIds());

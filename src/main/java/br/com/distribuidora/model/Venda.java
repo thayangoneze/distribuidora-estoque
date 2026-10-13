@@ -20,7 +20,6 @@ public class Venda {
     @Embeddable public static class Item {
         public Long produtoId;
         @Column(nullable=false) public String nome;
-        public String codigoBarras;
         public String unidade;
         public int quantidade;
         @Column(nullable=false,precision=14,scale=2) public BigDecimal precoUnitario;
