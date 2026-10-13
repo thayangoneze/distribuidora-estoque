@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="/css/styles.css">
   <script src="/js/app.js" defer></script>
   <script src="/js/produtos.js" defer></script>
-  <script src="/js/cadastro-lote.js" defer></script>
 </head>
 <body>
   <a class="pular" href="#conteudo">Pular para o conteúdo</a>
@@ -19,7 +18,7 @@
   </aside>
   <div class="area-principal" id="conteudo">
     <header class="topo"><span>GESTÃO <span class="barra">/</span> PRODUTOS</span><span class="etiqueta-topo">Painel do gestor</span></header>
-    <main class="container"><div id="mensagem" role="status" aria-live="polite" hidden></div><header class="cabecalho-pagina"><span class="sobretitulo escuro">GESTÃO DA DISTRIBUIDORA</span><h1>Produtos</h1></header><section class="painel" id="cadastro-lote"><div class="titulo-linha"><div><span class="sobretitulo escuro">CADASTRO EM LOTE</span><h2>Vários produtos de uma vez</h2></div><button type="button" id="carregar-exemplos" class="secundario">Carregar os 50 exemplos</button></div><p class="ajuda">Carregue a lista de demonstração ou cole dados separados por ponto e vírgula. Nenhum produto é salvo antes da revisão e confirmação.</p><p class="ajuda">Formato: produto;unidade;quantidade;custo;venda;acrescimo;seguranca;fornecedores. Use | entre várias empresas. Preencha venda ou acréscimo (%), sem usar os dois. Valores dos exemplos são hipotéticos; recarga de 20 L não inclui vasilhame.</p><label>Lista de produtos<textarea id="texto-lote" rows="8" maxlength="100000" spellcheck="false" placeholder="produto;unidade;quantidade;custo;venda;acrescimo;seguranca;fornecedores"></textarea></label><button type="button" id="revisar-lote">Revisar lista</button><p id="status-lote" role="status" class="ajuda" hidden></p><form id="form-lote" hidden><div class="rolagem"><table><thead><tr><th>Produto</th><th>Unidade</th><th>Quantidade</th><th>Custo</th><th>Venda</th><th>Segurança</th><th>Fornecedores</th></tr></thead><tbody id="previa-lote"></tbody></table></div><p class="ajuda" id="empresas-lote"></p><label class="confirmacao-caixa"><input id="criar-empresas-lote" type="checkbox" checked>Autorizar o cadastro de empresas que ainda não existem.</label><p class="ajuda">Empresas novas ficam sem dias de entrega até você preencher a agenda em Fornecedores.</p><label class="confirmacao-caixa"><input id="confirmar-lote" type="checkbox" required>Conferi os produtos, quantidades e valores e quero cadastrar este lote.</label><div class="acoes"><button type="submit" id="salvar-lote">Cadastrar lote no estoque</button><button type="button" id="cancelar-lote" class="secundario">Cancelar revisão</button></div></form></section><section class="painel">
+    <main class="container"><div id="mensagem" role="status" aria-live="polite" hidden></div><header class="cabecalho-pagina"><span class="sobretitulo escuro">GESTÃO DA DISTRIBUIDORA</span><h1>Produtos</h1></header><section class="painel">
         <div class="cabecalho-painel"><span class="numero">01</span><div><h2>Novo produto</h2><p>Cadastre um item e defina os parâmetros de reposição.</p></div></div>
         <form id="form-produto">
           <label>Nome do produto<input name="nome" required maxlength="255" placeholder="Ex.: Refrigerante 2 L"></label>

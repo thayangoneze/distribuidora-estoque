@@ -50,4 +50,3 @@ textarea:focus{outline:2px solid #222;outline-offset:1px}
 .grade-caixa{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);gap:24px;margin-bottom:24px}.grade-caixa .painel{min-width:0}.grade-caixa form{margin-bottom:20px}.pagamento-caixa{align-self:start}.linha-total{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid #eee}.total-caixa{font-size:23px;font-weight:700}.confirmacao-caixa{display:flex;gap:10px;align-items:center;line-height:1.5}.confirmacao-caixa input{width:18px;min-height:18px}.qtd-carrinho{width:85px;min-width:75px}#cancelar-venda,#atualizar-caixa{margin-top:10px}#comprovante-venda p{overflow-wrap:anywhere}@media(max-width:1100px){.grade-caixa{grid-template-columns:1fr}}
 
 
-#form-lote .rolagem{max-height:360px;overflow:auto}#texto-lote{font-family:monospace;font-size:12px}#cadastro-lote .confirmacao-caixa{margin:18px 0}

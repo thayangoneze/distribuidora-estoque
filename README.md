@@ -134,12 +134,4 @@ O resumo fica em `/visao-geral.html`; Estoque registra recebimentos e perdas/aju
 
 Basta iniciar o Spring Boot e abrir o endereço local. O sistema não depende de cloudflared, túnel externo ou acesso à câmera. Se houver um túnel aberto, encerre-o com Ctrl+C no terminal correspondente; mantenha o terminal da aplicação aberto. A senha já configurada permanece válida.
 
-## Cadastro em lote e 50 exemplos
-
-Em **Produtos → Vários produtos de uma vez**, clique **Carregar os 50 exemplos**, revise o texto e clique **Revisar lista**. Confira a prévia, autorize a criação de empresas novas se desejado, marque a confirmação e clique **Cadastrar lote no estoque**. Nada é cadastrado ao carregar ou revisar.
-
-Os 50 exemplos reproduzem a lista demonstrativa de bebidas, água e gelo, com quantidades/preços hipotéticos por unidade. Estoque de segurança inicia em zero; ajuste conforme a operação. Fornecedores são exemplos de vínculo, não contratos reais. Empresas novas são cadastradas sem dias de entrega; configure a agenda na página Fornecedores. Recarga de água de 20 L não inclui vasilhame.
-
-O campo também aceita texto de até 200 linhas com cabeçalho `produto;unidade;quantidade;custo;venda;acrescimo;seguranca;fornecedores`. Uma linha por produto, separador `;`, valores com vírgula ou ponto decimal sem milhares e `|` para vários fornecedores. Unidade UN/CX/PCT. Informe venda ou acréscimo, sem os dois; acréscimo exige custo e calcula o preço como no cadastro individual. Nome/fornecedor não podem conter o separador ou quebra de linha.
-
-`POST /api/produtos/lote` exige sessão, CSRF, UUID e revisão confirmada. Cadastro, fornecedores e registros de saldo inicial são atômicos: qualquer falha reverte o lote inteiro. Nomes repetidos no lote ou já existentes são rejeitados, sem alterar produtos atuais. UUID/assinatura retornam o resultado de um reenvio idêntico sem repetir cadastro. As importações são serializadas até o commit nesta instância. Não substitui o estoque nem transforma saldos iniciais em vendas. A prévia não grava nada no banco.
+O cadastro de produtos é individual. O cadastro em lote e os exemplos foram removidos da interface e da API. Produtos e saldos já cadastrados permanecem no banco.
